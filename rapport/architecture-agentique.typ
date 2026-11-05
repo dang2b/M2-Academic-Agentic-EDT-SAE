@@ -20,7 +20,7 @@ L'équipe n'a pas un outillage homogène : une partie utilise Claude Code, une a
   [Tests], [pytest sur le vrai PostgreSQL. CI à venir.],
 )
 
-=  Daniel : Claude Code
+= Daniel : Claude Code
 
 == Composants
 
@@ -28,7 +28,8 @@ L'équipe n'a pas un outillage homogène : une partie utilise Claude Code, une a
   columns: (auto, 1fr, auto),
   [Composant], [Configuration], [Utilisé ?],
   [Agent principal], [Claude Code, extension VS Code], [oui],
-  [Modèle], [Claude Opus 5.5, effort moyen, fixé pour le projet. Sonnet 5.5 pour les questions hors code.], [oui],
+  [Modèle], [Claude Opus 5.5, effort moyen, fixé pour le projet : adapté à un gros projet, avec des tâches longues et beaucoup de composants à prendre en compte. Sonnet 5.5 pour les questions hors code.], [oui],
+  [Autonomie], [L'agent modifie les fichiers et lance les commandes sans demander de confirmation. Seuls le commit et le push attendent l'accord de l'humain.], [oui],
   [Contexte projet], [`AGENTS.md` (commun)], [oui],
   [Contexte personnel], [Fichier global : langue, réponses courtes, environnement (Ubuntu, GPU), commandes à donner sur une ligne], [oui],
   [Outils web], [Recherche et lecture de pages, pour vérifier les sources du rapport], [oui],
@@ -41,14 +42,27 @@ L'équipe n'a pas un outillage homogène : une partie utilise Claude Code, une a
 == Boucle de travail
 
 #align(center, block(inset: 8pt, stroke: 0.4pt + luma(160), radius: 3pt)[
-  demande en langage naturel → l'agent explore et propose → *validation ou correction humaine* → l'agent écrit le code et les tests → commit avec trailer, push de la branche → *PR relue par un humain* → fusion dans `dev` → ligne de journal
+  *mise en contexte* (documents, décisions, contraintes) → pour chaque tâche, une par une : l'agent exécute → *vérification et validation humaines* → commit et push *après accord* → PR relue → fusion dans `dev` → ligne de journal
 ])
 
-Les actions sensibles (suppression de données, ajout de dépendance, modification du socle commun) demandent une confirmation, comme le prévoit `AGENTS.md`. L'agent ne pousse jamais directement sur `main` ou `dev`.
+Les tâches sont confiées une à la fois plutôt qu'en un seul gros prompt : chaque résultat est vérifié avant de passer à la suite. Les actions sensibles (suppression de données, ajout de dépendance, modification du socle commun) demandent une confirmation, comme le prévoit `AGENTS.md`. L'agent ne pousse jamais directement sur `main` ou `dev`.
+
+== Ce qui est délégué, ce qui reste humain
+
+#table(
+  columns: (1fr, 1fr),
+  [Délégué à l'agent], [Fait ou décidé par l'humain],
+  [Schéma de base et migrations], [Relecture des migrations (perte de données, contraintes)],
+  [Générateur de jeux de données], [Validation de la cohérence des données générées],
+  [Implémentation de l'algorithme de génération], [Conception de l'algorithme : modélisation, heuristiques, complexité],
+  [Tests, scripts de mesure, documentation], [Choix d'architecture, priorités, validation de chaque tâche],
+)
 
 == Usage réel à ce jour
 
-Nombre d'appels d'outils, mesuré sur tous les transcripts du projet au 5 novembre (2 tâches terminées et leur suivi) :
+D'après le journal au 5 novembre : *3 tâches*, *64 min*, *1 intervention* humaine, *6,53 \$* (équivalent tarif API).
+
+Nombre d'appels d'outils, mesuré sur tous les transcripts du projet à la même date :
 
 #table(
   columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
@@ -67,8 +81,8 @@ Nombre d'appels d'outils, mesuré sur tous les transcripts du projet au 5 novemb
 - *Hook projet* lançant les tests avant un commit : moins de corrections après coup ?
 - Chaque ajout est noté `infra-agent` dans le journal, pour mesurer son coût de mise en place.
 
-= Configurations 2 à 5
+= Autres membres
 
-#text(fill: luma(100))[À compléter par chaque membre : outil, modèle, contexte, ce qui est délégué à l'IA et ce qui reste manuel.]
+#text(fill: luma(100))[À compléter par chaque membre, une sous-section par personne : outil, modèle, contexte, ce qui est délégué à l'IA et ce qui reste manuel.]
 
 #bibliography("refs.bib", title: "Références", style: "ieee")
