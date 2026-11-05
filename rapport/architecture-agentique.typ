@@ -20,7 +20,7 @@ L'équipe n'a pas un outillage homogène : une partie utilise Claude Code, une a
   [Tests], [pytest sur le vrai PostgreSQL. CI à venir.],
 )
 
-= Configuration 1 : Claude Code (référent Data)
+=  Daniel : Claude Code
 
 == Composants
 
