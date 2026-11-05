@@ -33,6 +33,14 @@ class TimeGrid:
             for start in range(block_start, block_end - duration_min + 1, self.step_min)
         ]
 
+    def fits(self, day: int, start_min: int, duration_min: int) -> bool:
+        return 0 <= day < self.days and any(
+            block_start <= start_min
+            and start_min + duration_min <= block_end
+            and (start_min - block_start) % self.step_min == 0
+            for block_start, block_end in self.blocks
+        )
+
     def half_day(self, start_min: int) -> HalfDay:
         return "MORNING" if start_min < self.blocks[-1][0] else "AFTERNOON"
 
