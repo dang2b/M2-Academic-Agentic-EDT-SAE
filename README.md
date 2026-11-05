@@ -14,7 +14,7 @@ Ce dépôt est notre fork du starter commun aux 4 groupes (même schéma de base
 | Thomas SANNA | DE | BDD, import CSV, génération des emplois du temps |
 | Clément LORIEAU | DFS | Référent API : auth, API, front |
 | Simon COSSAIS | DFS | Auth, API, front |
-| Thibaut RENAUD | DFS | Auth, API, front |
+| Thibaut RENAUT | DFS | Auth, API, front |
 
 ## Lancer
 
