@@ -58,22 +58,6 @@ Les tâches sont confiées une à la fois plutôt qu'en un seul gros prompt : ch
   [Tests, scripts de mesure, documentation], [Choix d'architecture, priorités, validation de chaque tâche],
 )
 
-== Usage réel à ce jour
-
-D'après le journal au 5 novembre : *3 tâches*, *64 min*, *1 intervention* humaine, *6,53 \$* (équivalent tarif API).
-
-Nombre d'appels d'outils, mesuré sur tous les transcripts du projet à la même date :
-
-#table(
-  columns: (1fr, 1fr, 1fr, 1fr, 1fr, 1fr),
-  [Bash], [Édition], [Écriture], [Web], [Lecture], [Skills / sous-agents],
-  [75], [54], [25], [25], [10], [1 / 0],
-)
-
-#note(title: "Constat")[
-  Un agent seul, avec un bon contexte, a suffi jusqu'ici : aucun sous-agent n'a été utile. C'est cohérent avec la recommandation de commencer simple @anthropic2024agents. Les sous-agents seront ajoutés seulement si le journal montre un gain.
-]
-
 == À évaluer ensuite
 
 - *Sous-agent relecteur* avant chaque PR : est-ce qu'il réduit le taux de retouche et les bugs ?
