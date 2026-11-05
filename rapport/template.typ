@@ -7,6 +7,7 @@
   authors: (),
   date: none,
   lang: "fr",
+  unbreakable-tables: true,  // false for documents with long tables
   body,
 ) = {
   set document(title: title, author: authors)
@@ -21,7 +22,7 @@
   set table(stroke: 0.4pt + luma(160), inset: 6pt)
   show table: set par(justify: false)
   show table: set text(size: 10pt)
-  show table: it => block(breakable: false, it)
+  show table: it => if unbreakable-tables { block(breakable: false, it) } else { it }
   show bibliography: set text(size: 8.5pt)
   show bibliography: set block(spacing: 0.35em)
   show table.cell.where(y: 0): set text(weight: "bold")

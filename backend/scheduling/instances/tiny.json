@@ -1,0 +1,138 @@
+{
+ "week": null,
+ "grid": {
+  "days": 5,
+  "blocks": [
+   [
+    510,
+    720
+   ],
+   [
+    810,
+    1110
+   ]
+  ],
+  "step_min": 30,
+  "durations_min": [
+   60,
+   90
+  ]
+ },
+ "rooms": [
+  {
+   "id": 100,
+   "capacity": 100,
+   "room_type": null
+  },
+  {
+   "id": 101,
+   "capacity": 35,
+   "room_type": null
+  },
+  {
+   "id": 102,
+   "capacity": 20,
+   "room_type": "TP_INFO"
+  }
+ ],
+ "groups": [
+  {
+   "id": 1,
+   "size": 60,
+   "parent_id": null
+  },
+  {
+   "id": 2,
+   "size": 30,
+   "parent_id": 1
+  },
+  {
+   "id": 3,
+   "size": 30,
+   "parent_id": 1
+  },
+  {
+   "id": 4,
+   "size": 15,
+   "parent_id": 2
+  }
+ ],
+ "sessions": [
+  {
+   "id": 1,
+   "duration_min": 90,
+   "teacher_ids": [
+    10
+   ],
+   "group_ids": [
+    1
+   ],
+   "session_type": "CM",
+   "subject_id": null,
+   "room_type": null
+  },
+  {
+   "id": 2,
+   "duration_min": 90,
+   "teacher_ids": [
+    11
+   ],
+   "group_ids": [
+    2
+   ],
+   "session_type": "TD",
+   "subject_id": null,
+   "room_type": null
+  },
+  {
+   "id": 3,
+   "duration_min": 60,
+   "teacher_ids": [
+    11
+   ],
+   "group_ids": [
+    3
+   ],
+   "session_type": "TD",
+   "subject_id": null,
+   "room_type": null
+  },
+  {
+   "id": 4,
+   "duration_min": 90,
+   "teacher_ids": [
+    10
+   ],
+   "group_ids": [
+    4
+   ],
+   "session_type": "TP",
+   "subject_id": null,
+   "room_type": "TP_INFO"
+  }
+ ],
+ "teacher_unavailabilities": [
+  {
+   "resource_id": 11,
+   "day": 0,
+   "start_min": 510,
+   "end_min": 720
+  }
+ ],
+ "room_unavailabilities": [
+  {
+   "resource_id": 102,
+   "day": 4,
+   "start_min": 810,
+   "end_min": 1110
+  }
+ ],
+ "preferences": [
+  {
+   "teacher_id": 10,
+   "day": null,
+   "half_day": "MORNING",
+   "weight": 1
+  }
+ ]
+}
