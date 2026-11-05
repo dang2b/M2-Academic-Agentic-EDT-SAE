@@ -1,3 +1,6 @@
+-- Archived copy of the former db/init.sql, kept for reference: it is no longer executed.
+-- The schema now lives in backend/models/ and backend/migrations/versions/.
+
 -- =====================================================================
 -- Schéma de la base + données de référence.
 -- Exécuté automatiquement par Postgres au PREMIER démarrage (volume vide).

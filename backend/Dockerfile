@@ -6,11 +6,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# requirements-dev.txt (adds the test tools) in docker-compose.yml, requirements.txt in production
+ARG REQUIREMENTS=requirements.txt
+COPY requirements*.txt .
+RUN pip install -r ${REQUIREMENTS}
 
 COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn main:app --host 0.0.0.0 --port 8000"]

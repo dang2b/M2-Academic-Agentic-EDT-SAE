@@ -10,8 +10,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-sae}
     volumes:
       - pgdata:/var/lib/postgresql/data
-      # Joué automatiquement au premier démarrage (volume vide)
-      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     healthcheck:
@@ -21,10 +19,17 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        REQUIREMENTS: requirements-dev.txt
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER:-sae}:${POSTGRES_PASSWORD:-sae}@db:5432/${POSTGRES_DB:-sae}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-sae}:${POSTGRES_PASSWORD:-sae}@db:5432/${POSTGRES_DB:-sae}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      # Local demo account only: never set these on the VPS
+      DEMO_ADMIN_EMAIL: ${DEMO_ADMIN_EMAIL:-admin@example.com}
+      DEMO_ADMIN_PASSWORD: ${DEMO_ADMIN_PASSWORD:-admin1234}
     depends_on:
       db:
         condition: service_healthy
@@ -33,7 +38,7 @@ services:
     # Dev : code monté en volume + rechargement à chaud
     volumes:
       - ./backend:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    command: sh -c "alembic upgrade head && python -m seed && exec uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
 
   # Interface web pour explorer la base : docker compose --profile tools up
   adminer:

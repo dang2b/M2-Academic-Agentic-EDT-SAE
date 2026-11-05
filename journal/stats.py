@@ -9,7 +9,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 CSV_PATH = Path(__file__).parent / "ia.csv"
-INFRA_MODULE = "infra-agent"  # mise en place de l'architecture agentique (CLAUDE.md, skills, sous-agents)
+INFRA_MODULE = "infra-agent"  # mise en place de l'architecture agentique (AGENTS.md, skills, sous-agents)
 CODE_FILE = re.compile(r"\.(py|ts|tsx|js|jsx|sql|css|html|ya?ml)$|Dockerfile$")
 KINDS = ("genere", "retouche", "manuel")
 
@@ -23,32 +23,44 @@ def load_rows() -> list[dict]:
         return list(csv.DictReader(f))
 
 
-def num(row: dict, key: str) -> float:
-    return float(row.get(key) or 0)
+def filled(row: dict, key: str) -> bool:
+    return bool((row.get(key) or "").strip())
+
+
+def values(rows: list[dict], key: str) -> list[float]:
+    """Valeurs renseignées seulement : une case vide n'est pas un 0."""
+    return [float(r[key]) for r in rows if filled(r, key)]
+
+
+def total(xs: list) -> float | None:
+    return sum(xs) if xs else None
+
+
+def mean(xs: list) -> float | None:
+    return sum(xs) / len(xs) if xs else None
 
 
 def summarize(rows: list[dict]) -> dict:
-    n = len(rows)
-    est = sum(num(r, "estimation_min") for r in rows)
-    real = sum(num(r, "temps_reel_min") for r in rows)
-    cost = sum(num(r, "cout_usd") for r in rows)
+    # Le ratio ne compare que les tâches qui ont à la fois une estimation et un temps réel.
+    both = [r for r in rows if filled(r, "estimation_min") and filled(r, "temps_reel_min")]
+    est = sum(values(both, "estimation_min"))
+    answers = [(r.get("succes_sans_intervention") or "").strip() for r in rows]
+    success = [a == "oui" for a in answers if a in ("oui", "non")]
     return {
-        "taches": n,
-        "interventions_par_tache": sum(num(r, "interventions") for r in rows) / n,
-        "taux_succes_sans_intervention": sum(r["succes_sans_intervention"] == "oui" for r in rows) / n,
-        "temps_estime_min": est,
-        "temps_reel_min": real,
-        "ratio_reel_estime": real / est if est else None,
-        "temps_setup_min": sum(num(r, "temps_setup_min") for r in rows),
-        "temps_revue_min": sum(num(r, "temps_revue_min") for r in rows),
-        "temps_correction_min": sum(num(r, "temps_correction_min") for r in rows),
-        "tours_par_tache": sum(num(r, "tours") for r in rows) / n,
-        "tokens_entree": sum(num(r, "tokens_entree") for r in rows),
-        "tokens_cache_lu": sum(num(r, "tokens_cache_lu") for r in rows),
-        "tokens_sortie": sum(num(r, "tokens_sortie") for r in rows),
-        "tokens_sortie_par_tache": sum(num(r, "tokens_sortie") for r in rows) / n,
-        "cout_usd": cost,
-        "cout_usd_par_tache": cost / n,
+        "taches": len(rows),
+        "interventions_par_tache": mean(values(rows, "interventions")),
+        "taux_succes_sans_intervention": mean(success),
+        "temps_estime_min": total(values(rows, "estimation_min")),
+        "temps_reel_min": total(values(rows, "temps_reel_min")),
+        "ratio_reel_estime": sum(values(both, "temps_reel_min")) / est if est else None,
+        "temps_revue_min": total(values(rows, "temps_revue_min")),
+        "tours_par_tache": mean(values(rows, "tours")),
+        "tokens_entree": total(values(rows, "tokens_entree")),
+        "tokens_cache_lu": total(values(rows, "tokens_cache_lu")),
+        "tokens_sortie": total(values(rows, "tokens_sortie")),
+        "tokens_sortie_par_tache": mean(values(rows, "tokens_sortie")),
+        "cout_usd": total(values(rows, "cout_usd")),
+        "cout_usd_par_tache": mean(values(rows, "cout_usd")),
     }
 
 
@@ -88,7 +100,8 @@ def surviving_lines(commits: list[dict]) -> Counter:
 def print_block(title: str, stats: dict) -> None:
     print(f"\n## {title}")
     for k, v in stats.items():
-        print(f"  {k:32} {v:.2f}" if isinstance(v, float) else f"  {k:32} {v}")
+        shown = "non renseigné" if v is None else f"{v:.2f}" if isinstance(v, float) else v
+        print(f"  {k:32} {shown}")
 
 
 def print_journal(rows: list[dict]) -> None:
@@ -98,27 +111,28 @@ def print_journal(rows: list[dict]) -> None:
         by_author[r["auteur"]].append(r)
     for author, author_rows in sorted(by_author.items()):
         print_block(author, summarize(author_rows))
-    by_tool = defaultdict(list)
-    for r in rows:
-        by_tool[r["outil"] or "?"].append(r)
-    for tool, tool_rows in sorted(by_tool.items()):
-        print_block(f"outil : {tool}", summarize(tool_rows))
+    for column in ("outil", "modele"):
+        groups = defaultdict(list)
+        for r in rows:
+            groups[(r.get(column) or "").strip() or "?"].append(r)
+        for name, group_rows in sorted(groups.items()):
+            print_block(f"{column} : {name}", summarize(group_rows))
 
-    total_time = sum(num(r, "temps_reel_min") for r in rows) or 1
+    total_time = sum(values(rows, "temps_reel_min")) or 1
     by_module = defaultdict(list)
     for r in rows:
         by_module[r["module"]].append(r)
     print("\n## Répartition par module (tâches, temps, part du temps)")
     for module, module_rows in sorted(by_module.items()):
-        t = sum(num(r, "temps_reel_min") for r in module_rows)
+        t = sum(values(module_rows, "temps_reel_min"))
         print(f"  {module:20} {len(module_rows):4} taches {t:7.0f} min  {t / total_time:6.1%}")
 
     infra = by_module.get(INFRA_MODULE)
     if infra:
         print_block(f"Coût fixe de l'architecture agentique ({INFRA_MODULE})", {
-            "temps_min": sum(num(r, "temps_reel_min") for r in infra),
-            "cout_usd": sum(num(r, "cout_usd") for r in infra),
-            "part_du_temps_total": sum(num(r, "temps_reel_min") for r in infra) / total_time,
+            "temps_min": total(values(infra, "temps_reel_min")),
+            "cout_usd": total(values(infra, "cout_usd")),
+            "part_du_temps_total": sum(values(infra, "temps_reel_min")) / total_time,
         })
 
 
