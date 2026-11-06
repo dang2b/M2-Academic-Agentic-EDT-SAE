@@ -74,34 +74,32 @@ Les tâches sont confiées une à la fois plutôt qu'en un seul gros prompt : ch
 #table(
   columns: (auto, 1fr, auto),
   [Composant], [Configuration], [Utilisé ?],
-  [Agent principal], [Claude Code sous Windows 11 (interface : #todo)], [oui],
-  [Modèle], [Claude Opus 5.5 par défaut, effort élevé. Raison du choix : #todo], [oui],
+  [Agent principal], [Claude Code et parfois Opencode sous Windows 11 (interface : Terminal Powershell/TUI)], [oui],
+  [Modèle], [Claude Opus 5.5 par défaut, effort élevé. Raison du choix : Modèle le plus performant aujourd'hui (Nov. 2026)], [oui],
   [Autonomie], [Mode `auto` : l'agent modifie les fichiers et lance les commandes sans demander, les actions risquées restent soumises à confirmation. Le commit n'est fait que sur demande explicite (fichier global).], [oui],
   [Contexte projet], [`AGENTS.md` (commun)], [oui],
   [Contexte personnel], [Fichier global : priorités (exactitude, preuves, sécurité, changements minimaux), interdits (inventer un chemin ou un résultat de test, affaiblir un test, exposer un secret), discipline de code (pas de code mort, pas d'abstraction spéculative), tests sans mocks, commits en Conventional Commits. Réponses en français.], [oui],
-  [Outils web], [Recherche web ; extension Claude in Chrome (pilotage du navigateur)], [#todo],
-  [Serveurs MCP], [`codegraph` (graphe de symboles du code, pas d'index pour ce projet) ; connecteurs claude.ai (Claude Docs, Gmail, Context7)], [#todo],
-  [Skills], [`karpathy-guidelines` (garde-fous contre les erreurs courantes des LLM) ; plugin superpowers (obra/superpowers, v6.4.2) : brainstorming, plans, TDD, débogage systématique, vérification avant de conclure, revue de code, développement par sous-agents…], [#todo],
-  [Sous-agents], [Intégrés : exploration, planification, usage général. Aucun sous-agent personnel.], [#todo],
-  [Hooks], [Personnels : au démarrage de session, superpowers injecte ses consignes ; à chaque prompt, `codegraph` ajoute du contexte. Aucun hook propre au projet.], [non (projet)],
-  [Mémoire persistante], [Disponible, vide pour ce projet], [non],
+  [Outils web], [Recherche web ; extension Claude in Chrome/Browser Use (pilotage du navigateur)], [oui],
+  [Serveurs MCP], [`codegraph` (graphe de symboles du code) / connecteurs Claude.ai], [oui],
+  [Skills], [`karpathy-guidelines` (garde-fous contre les erreurs courantes des LLM) ; plugin superpowers (obra/superpowers, v6.4.2) : brainstorming, plans, TDD, débogage systématique, vérification avant de conclure, revue de code, développement par sous-agents…], [oui],
+  [Sous-agents], [Orchestrator qui appelle des sous agents : explorer, librarian, oracle, designer et fixer.], [parfois, selon la tâche],
 )
 
 == Boucle de travail
 
-#todo
+Dans le prompt : Idée de feature/correction d'un bug provenant d'une issue ou autre source → l'agent propose un brainstorm puis specs puis plan → je valide le plan → l'agent exécute le plan → l'agent test ses implémentations → relecture du code rapide -> commit et push *après accord* → PR relue → fusion dans `dev` → ligne de journal
 
 == Ce qui est délégué, ce qui reste humain
 
 #table(
   columns: (1fr, 1fr),
   [Délégué à l'agent], [Fait ou décidé par l'humain],
-  [#todo], [#todo],
+  [Ecriture de code], [Relécture du code et validation de la cohérence des choix],
 )
 
 == À évaluer ensuite
 
-#todo
+Qu'est ce qui est le plus efficace/le plus cher : sous agent ou pas ?
 
 = Autres membres
 
