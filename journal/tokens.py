@@ -1,5 +1,9 @@
 """Compte les tokens, le coût et les tours Claude Code sur ce projet (sous-agents inclus).
 
+Les tokens et le coût additionnent l'orchestrateur et ses sous-agents ; chaque réponse est
+facturée au tarif de son propre modèle. Le script donne aussi le nombre de sous-agents et
+leur modèle principal, séparé de celui de l'orchestrateur.
+
 Usage :
   python journal/tokens.py                                  # dernière session
   python journal/tokens.py --since "2026-11-05 14:00"       # depuis une heure donnée
@@ -32,7 +36,8 @@ def parse_local(value: str) -> datetime:
     return datetime.fromisoformat(value).astimezone(timezone.utc)
 
 
-def session_files(since: datetime | None) -> list[Path]:
+def session_files(since: datetime | None) -> list[tuple[Path, bool]]:
+    """Transcripts to read, each flagged True if it belongs to a subagent."""
     sessions = sorted(TRANSCRIPTS.glob("*.jsonl"), key=lambda p: p.stat().st_mtime)
     if not sessions:
         raise SystemExit(f"Aucun transcript dans {TRANSCRIPTS}")
@@ -40,9 +45,14 @@ def session_files(since: datetime | None) -> list[Path]:
         sessions = sessions[-1:]
     files = []
     for s in sessions:
-        files.append(s)
-        files.extend((s.parent / s.stem / "subagents").glob("*.jsonl"))
+        files.append((s, False))
+        files.extend((f, True) for f in (s.parent / s.stem / "subagents").glob("*.jsonl"))
     return files
+
+
+def by_output(output_by_model: dict) -> list[tuple[str, int]]:
+    """Models that produced output, main one (most output tokens) first."""
+    return sorted(((m, n) for m, n in output_by_model.items() if n), key=lambda mn: -mn[1])
 
 
 def cost(model: str, u: dict) -> float | None:
@@ -61,11 +71,13 @@ def cost(model: str, u: dict) -> float | None:
     ) / 1_000_000
 
 
-def count(files: list[Path], since: datetime | None, until: datetime | None) -> dict:
+def count(files: list[tuple[Path, bool]], since: datetime | None, until: datetime | None) -> dict:
     seen, prompts, local_commands, unpriced, stamps = set(), set(), set(), set(), []
     totals = defaultdict(float)
-    output_by_model = defaultdict(int)
-    for path in files:
+    # Orchestrator and subagents are kept apart: they may run on different models
+    output_by_model = {False: defaultdict(int), True: defaultdict(int)}
+    active_subagents = set()
+    for path, is_subagent in files:
         for line in path.open(encoding="utf-8"):
             entry = json.loads(line)
             if "timestamp" not in entry:
@@ -92,22 +104,37 @@ def count(files: list[Path], since: datetime | None, until: datetime | None) -> 
             totals["entree"] += u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
             totals["cache_lu"] += u.get("cache_read_input_tokens", 0)
             totals["sortie"] += u.get("output_tokens", 0)
-            output_by_model[msg.get("model") or "?"] += u.get("output_tokens", 0)
+            output_by_model[is_subagent][msg.get("model") or "?"] += u.get("output_tokens", 0)
+            if is_subagent:
+                active_subagents.add(path)
+                totals["sortie_sous_agents"] += u.get("output_tokens", 0)
             c = cost(msg.get("model", ""), u)
             if c is None:
                 unpriced.add(msg.get("model"))
             else:
                 totals["cout_usd"] += c
+                if is_subagent:
+                    totals["cout_sous_agents_usd"] += c
     totals["tours"] = len(prompts - local_commands)
     totals["reponses"] = len(seen)
-    # Models that produced output, main one (most output tokens) first
-    totals["modeles"] = sorted(((m, n) for m, n in output_by_model.items() if n), key=lambda mn: -mn[1])
+    # A subagent counts if it answered at least once in the time range
+    totals["sous_agents"] = len(active_subagents)
+    totals["modeles"] = by_output(output_by_model[False])
+    totals["modeles_sous_agents"] = by_output(output_by_model[True])
     if stamps:
         totals["debut"], totals["fin"] = min(stamps), max(stamps)
         totals["duree_min"] = (totals["fin"] - totals["debut"]).total_seconds() / 60
     if unpriced:
         print(f"Attention : modèles sans tarif dans PRICES, exclus du coût : {unpriced}")
     return totals
+
+
+def print_models(label: str, models: list[tuple[str, int]], who: str) -> None:
+    if not models:
+        return
+    out = sum(n for _, n in models)
+    shares = ", ".join(f"{m} {n / out:.0%}" for m, n in models)
+    print(f"{label:18} {models[0][0]}   (part des tokens de sortie, {who} : {shares})")
 
 
 def main() -> None:
@@ -119,18 +146,21 @@ def main() -> None:
     t = count(session_files(args.since), args.since, args.until)
     if "debut" in t:
         for k in ("debut", "fin"):
-            print(f"{k:16} {t[k].astimezone():%Y-%m-%d %H:%M}")
-        print(f"{'duree_min':16} {t['duree_min']:.0f}   (premier au dernier horodatage : base pour temps_reel_min)")
-    print(f"{'duree_agent_min':16} {t['duree_agent_min']:.0f}   (temps où l'agent travaillait, tours terminés seulement)")
-    if t["modeles"]:
-        out = sum(n for _, n in t["modeles"])
-        shares = ", ".join(f"{m} {n / out:.0%}" for m, n in t["modeles"])
-        print(f"{'modele':16} {t['modeles'][0][0]}   (part des tokens de sortie : {shares})")
+            print(f"{k:18} {t[k].astimezone():%Y-%m-%d %H:%M}")
+        print(f"{'duree_min':18} {t['duree_min']:.0f}   (premier au dernier horodatage : base pour temps_reel_min)")
+    print(f"{'duree_agent_min':18} {t['duree_agent_min']:.0f}   (temps où l'agent travaillait, tours terminés seulement)")
+    print_models("modele", t["modeles"], "orchestrateur")
+    print(f"{'sous_agents':18} {t['sous_agents']}")
+    print_models("modele_sous_agents", t["modeles_sous_agents"], "sous-agents")
     for k in ("tours", "reponses", "entree", "cache_lu", "sortie"):
-        print(f"{k:16} {int(t[k])}")
-    print(f"{'cout_usd':16} {t['cout_usd']:.2f}")
-    print("\nColonnes CSV (tours,tokens_entree,tokens_cache_lu,tokens_sortie,cout_usd) :")
-    print(f"{int(t['tours'])},{int(t['entree'])},{int(t['cache_lu'])},{int(t['sortie'])},{t['cout_usd']:.2f}")
+        print(f"{k:18} {int(t[k])}")
+    print(f"{'cout_usd':18} {t['cout_usd']:.2f}")
+    if t["sous_agents"]:
+        print(f"{'dont sous-agents':18} sortie {int(t['sortie_sous_agents'])}, cout_usd {t['cout_sous_agents_usd']:.2f}")
+    sub_model = t["modeles_sous_agents"][0][0] if t["modeles_sous_agents"] else ""
+    print("\nColonnes CSV (sous_agents,modele_sous_agents,tours,tokens_entree,tokens_cache_lu,tokens_sortie,cout_usd) :")
+    print(f"{t['sous_agents']},{sub_model},{int(t['tours'])},{int(t['entree'])},{int(t['cache_lu'])},"
+          f"{int(t['sortie'])},{t['cout_usd']:.2f}")
 
 
 if __name__ == "__main__":

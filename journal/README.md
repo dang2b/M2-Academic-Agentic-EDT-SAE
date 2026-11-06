@@ -12,7 +12,7 @@ Sert à mesurer :
 | :--- | :--- |
 | `date` | `AAAA-MM-JJ` |
 | `auteur` | prénom (ex. `daniel`) |
-| `modele` | modèle principal, ex. `claude-opus-5-5`. Donné par `tokens.py` : celui qui a produit le plus de tokens de sortie (les autres vont dans `commentaire`). Vide si `outil = aucun` |
+| `modele` | modèle principal de l'orchestrateur (la session principale, hors sous-agents), ex. `claude-opus-5-5`. Donné par `tokens.py` : celui qui a produit le plus de tokens de sortie (les autres vont dans `commentaire`). Vide si `outil = aucun` |
 | `tache` | n° de PR (ou d'issue) puis courte description, ex. `#12 routes /auth` |
 | `module` | `auth`, `api`, `bdd`, `algo`, `front`, `ci`… et **`infra-agent`** pour la mise en place de l'architecture agentique (AGENTS.md, skills, sous-agents, hooks) |
 | `outil` | `claude-code`, `copilot`, `chatgpt`, `cursor`… ou `aucun` |
@@ -21,8 +21,10 @@ Sert à mesurer :
 | `temps_revue_min` | relecture du code généré **par vous** (pas par une IA), et corrections qui en découlent, à la main ou par re-prompt |
 | `interventions` | nombre d'interventions humaines (voir définition ci-dessous) |
 | `succes_sans_intervention` | `oui` si `interventions = 0` et que la tâche aboutit à une PR, sinon `non` (tâche abandonnée comprise). Passer à `non` si la PR est refusée ensuite |
+| `sous_agents` | nombre de sous-agents lancés pendant la tâche, `0` si aucun (donné par `tokens.py`) |
+| `modele_sous_agents` | modèle principal des sous-agents, même règle que `modele` ; vide s'il n'y a pas de sous-agent (donné par `tokens.py`) |
 | `tours` | nombre de prompts envoyés (donné par `tokens.py`) |
-| `tokens_entree` | tokens d'entrée hors lecture de cache (donné par `tokens.py`) |
+| `tokens_entree` | tokens d'entrée hors lecture de cache, orchestrateur et sous-agents additionnés, comme les autres colonnes de tokens et le coût (donné par `tokens.py`) |
 | `tokens_cache_lu` | tokens relus depuis le cache : contexte répété à chaque tour (donné par `tokens.py`) |
 | `tokens_sortie` | tokens générés par le modèle (donné par `tokens.py`) |
 | `cout_usd` | coût équivalent au tarif API, en $ (donné par `tokens.py`) |
@@ -31,7 +33,7 @@ Sert à mesurer :
 Exemple :
 
 ```csv
-2026-11-05,daniel,claude-sonnet-5-5,#12 routes /auth (login + refresh),auth,claude-code,60,95,30,3,non,10,148076,1744442,28482,1.89,"bcrypt oublié, refresh token mal expiré"
+2026-11-05,daniel,claude-sonnet-5-5,#12 routes /auth (login + refresh),auth,claude-code,60,95,30,3,non,2,claude-haiku-5-5,10,148076,1744442,28482,1.89,"bcrypt oublié, refresh token mal expiré"
 ```
 
 Ajoutez vos lignes **en fin de fichier** pour limiter les conflits git.
@@ -51,7 +53,9 @@ Notez l'heure de début de la tâche. À la fin, lancez :
 python journal/tokens.py --since "2026-11-05 14:00"   # ou sans argument : dernière session
 ```
 
-La dernière ligne affichée se colle telle quelle dans les colonnes `tours` à `cout_usd`, et la ligne `modele` donne la colonne du même nom. Les commandes locales (`/model`, `/effort`…) ne comptent pas comme des tours : rien n'est envoyé au modèle. Le script lit les transcripts Claude Code locaux, sous-agents compris : chacun le lance sur sa propre machine.
+La dernière ligne affichée se colle telle quelle dans les colonnes `sous_agents` à `cout_usd`, et la ligne `modele` donne la colonne du même nom. Les commandes locales (`/model`, `/effort`…) ne comptent pas comme des tours : rien n'est envoyé au modèle. Le script lit les transcripts Claude Code locaux, sous-agents compris : chacun le lance sur sa propre machine.
+
+**Sous-agents** : les tokens et le coût additionnent l'orchestrateur et ses sous-agents, et chaque réponse est facturée au tarif de son propre modèle (un sous-agent Haiku sous un orchestrateur Opus est compté au tarif Haiku). Le script affiche à part la sortie et le coût des sous-agents (`dont sous-agents`) ; ils ne vont pas dans le CSV. Un sous-agent compte s'il a répondu au moins une fois dans la plage. Le temps se mesure comme sans sous-agent : il tourne pendant le tour de l'orchestrateur, donc il est déjà dans `duree_min` et `duree_agent_min`.
 
 Le script affiche aussi des durées, calculées à partir des horodatages du transcript :
 - `debut`, `fin`, `duree_min` : du premier au dernier horodatage de la plage. C'est la base de `temps_reel_min`, à compléter avec le temps passé hors de Claude Code (IDE, GitHub, réunions).
@@ -63,7 +67,7 @@ Une case vide n'est pas un zéro : `stats.py` l'exclut des moyennes et affiche `
 
 Le coût est calculé au tarif API (grille dans `PRICES`, en tête du script), même si vous êtes sur un abonnement : c'est ce que la tâche aurait coûté en API.
 
-**Sans Claude Code** : comptez `tours` à la main (nombre de prompts envoyés), notez le modèle si l'outil l'affiche, et laissez les colonnes de tokens et de coût vides si l'outil ne les donne pas. Le reste du journal s'applique à tout le monde.
+**Sans Claude Code** : comptez `tours` à la main (nombre de prompts envoyés), notez le modèle si l'outil l'affiche, `sous_agents` si l'outil en a lancé (`0` sinon), et laissez les colonnes de tokens et de coût vides si l'outil ne les donne pas. Le reste du journal s'applique à tout le monde.
 
 ## 2. Trailers dans les commits
 
@@ -93,5 +97,7 @@ Seuls les fichiers de code sont comptés (`.py`, `.ts`, `.tsx`, `.js`, `.sql`, `
 ```bash
 python journal/stats.py
 ```
+
+Les métriques sont aussi regroupées par usage des sous-agents (`avec`, `sans`, `?` si non renseigné) et par `modele_sous_agents`.
 
 Les métriques 5 à 8 (défauts, dette, couverture/mutation, complexité/duplication) viendront de la CI, pas de ce journal.

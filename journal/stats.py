@@ -40,6 +40,13 @@ def mean(xs: list) -> float | None:
     return sum(xs) / len(xs) if xs else None
 
 
+def subagent_use(row: dict) -> str:
+    """'avec' / 'sans' sous-agents, '?' si la colonne n'est pas renseignée."""
+    if not filled(row, "sous_agents"):
+        return "?"
+    return "avec" if float(row["sous_agents"]) > 0 else "sans"
+
+
 def summarize(rows: list[dict]) -> dict:
     # Le ratio ne compare que les tâches qui ont à la fois une estimation et un temps réel.
     both = [r for r in rows if filled(r, "estimation_min") and filled(r, "temps_reel_min")]
@@ -55,6 +62,7 @@ def summarize(rows: list[dict]) -> dict:
         "ratio_reel_estime": sum(values(both, "temps_reel_min")) / est if est else None,
         "temps_revue_min": total(values(rows, "temps_revue_min")),
         "tours_par_tache": mean(values(rows, "tours")),
+        "sous_agents_par_tache": mean(values(rows, "sous_agents")),
         "tokens_entree": total(values(rows, "tokens_entree")),
         "tokens_cache_lu": total(values(rows, "tokens_cache_lu")),
         "tokens_sortie": total(values(rows, "tokens_sortie")),
@@ -117,6 +125,18 @@ def print_journal(rows: list[dict]) -> None:
             groups[(r.get(column) or "").strip() or "?"].append(r)
         for name, group_rows in sorted(groups.items()):
             print_block(f"{column} : {name}", summarize(group_rows))
+
+    by_use = defaultdict(list)
+    for r in rows:
+        by_use[subagent_use(r)].append(r)
+    for use, use_rows in sorted(by_use.items()):
+        print_block(f"sous-agents : {use}", summarize(use_rows))
+    # Seules les tâches avec sous-agents ont un modèle de sous-agent
+    by_sub_model = defaultdict(list)
+    for r in by_use.get("avec", []):
+        by_sub_model[(r.get("modele_sous_agents") or "").strip() or "?"].append(r)
+    for name, group_rows in sorted(by_sub_model.items()):
+        print_block(f"modele_sous_agents : {name}", summarize(group_rows))
 
     total_time = sum(values(rows, "temps_reel_min")) or 1
     by_module = defaultdict(list)
