@@ -65,6 +65,44 @@ Les tâches sont confiées une à la fois plutôt qu'en un seul gros prompt : ch
 - *Hook projet* lançant les tests avant un commit : moins de corrections après coup ?
 - Chaque ajout est noté `infra-agent` dans le journal, pour mesurer son coût de mise en place.
 
+= Thomas : Claude Code
+
+#let todo = text(fill: luma(100))[à compléter]
+
+== Composants
+
+#table(
+  columns: (auto, 1fr, auto),
+  [Composant], [Configuration], [Utilisé ?],
+  [Agent principal], [Claude Code sous Windows 11 (interface : #todo)], [oui],
+  [Modèle], [Claude Opus 5.5 par défaut, effort élevé. Raison du choix : #todo], [oui],
+  [Autonomie], [Mode `auto` : l'agent modifie les fichiers et lance les commandes sans demander, les actions risquées restent soumises à confirmation. Le commit n'est fait que sur demande explicite (fichier global).], [oui],
+  [Contexte projet], [`AGENTS.md` (commun)], [oui],
+  [Contexte personnel], [Fichier global : priorités (exactitude, preuves, sécurité, changements minimaux), interdits (inventer un chemin ou un résultat de test, affaiblir un test, exposer un secret), discipline de code (pas de code mort, pas d'abstraction spéculative), tests sans mocks, commits en Conventional Commits. Réponses en français.], [oui],
+  [Outils web], [Recherche web ; extension Claude in Chrome (pilotage du navigateur)], [#todo],
+  [Serveurs MCP], [`codegraph` (graphe de symboles du code, pas d'index pour ce projet) ; connecteurs claude.ai (Claude Docs, Gmail, Context7)], [#todo],
+  [Skills], [`karpathy-guidelines` (garde-fous contre les erreurs courantes des LLM) ; plugin superpowers (obra/superpowers, v6.4.2) : brainstorming, plans, TDD, débogage systématique, vérification avant de conclure, revue de code, développement par sous-agents…], [#todo],
+  [Sous-agents], [Intégrés : exploration, planification, usage général. Aucun sous-agent personnel.], [#todo],
+  [Hooks], [Personnels : au démarrage de session, superpowers injecte ses consignes ; à chaque prompt, `codegraph` ajoute du contexte. Aucun hook propre au projet.], [non (projet)],
+  [Mémoire persistante], [Disponible, vide pour ce projet], [non],
+)
+
+== Boucle de travail
+
+#todo
+
+== Ce qui est délégué, ce qui reste humain
+
+#table(
+  columns: (1fr, 1fr),
+  [Délégué à l'agent], [Fait ou décidé par l'humain],
+  [#todo], [#todo],
+)
+
+== À évaluer ensuite
+
+#todo
+
 = Autres membres
 
 #text(fill: luma(100))[À compléter par chaque membre, une sous-section par personne : outil, modèle, contexte, ce qui est délégué à l'IA et ce qui reste manuel.]
