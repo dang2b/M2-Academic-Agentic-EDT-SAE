@@ -40,6 +40,13 @@ def mean(xs: list) -> float | None:
     return sum(xs) / len(xs) if xs else None
 
 
+def share(rows: list[dict], part: str, whole: str) -> float | None:
+    """Part des sous-agents, sur les seules tâches qui renseignent les deux colonnes."""
+    both = [r for r in rows if filled(r, part) and filled(r, whole)]
+    denominator = sum(values(both, whole))
+    return sum(values(both, part)) / denominator if denominator else None
+
+
 def subagent_use(row: dict) -> str:
     """'avec' / 'sans' sous-agents, '?' si la colonne n'est pas renseignée."""
     if not filled(row, "sous_agents"):
@@ -69,6 +76,8 @@ def summarize(rows: list[dict]) -> dict:
         "tokens_sortie_par_tache": mean(values(rows, "tokens_sortie")),
         "cout_usd": total(values(rows, "cout_usd")),
         "cout_usd_par_tache": mean(values(rows, "cout_usd")),
+        "part_sortie_sous_agents": share(rows, "tokens_sortie_sous_agents", "tokens_sortie"),
+        "part_cout_sous_agents": share(rows, "cout_sous_agents_usd", "cout_usd"),
     }
 
 

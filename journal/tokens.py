@@ -2,7 +2,8 @@
 
 Les tokens et le coût additionnent l'orchestrateur et ses sous-agents ; chaque réponse est
 facturée au tarif de son propre modèle. Le script donne aussi le nombre de sous-agents et
-leur modèle principal, séparé de celui de l'orchestrateur.
+leur modèle principal, séparé de celui de l'orchestrateur, ainsi que leur part
+des tokens de sortie et du coût.
 
 Usage :
   python journal/tokens.py                                  # dernière session
@@ -134,7 +135,7 @@ def print_models(label: str, models: list[tuple[str, int]], who: str) -> None:
         return
     out = sum(n for _, n in models)
     shares = ", ".join(f"{m} {n / out:.0%}" for m, n in models)
-    print(f"{label:18} {models[0][0]}   (part des tokens de sortie, {who} : {shares})")
+    print(f"{label:20} {models[0][0]}   (part des tokens de sortie, {who} : {shares})")
 
 
 def main() -> None:
@@ -146,21 +147,22 @@ def main() -> None:
     t = count(session_files(args.since), args.since, args.until)
     if "debut" in t:
         for k in ("debut", "fin"):
-            print(f"{k:18} {t[k].astimezone():%Y-%m-%d %H:%M}")
-        print(f"{'duree_min':18} {t['duree_min']:.0f}   (premier au dernier horodatage : base pour temps_reel_min)")
-    print(f"{'duree_agent_min':18} {t['duree_agent_min']:.0f}   (temps où l'agent travaillait, tours terminés seulement)")
+            print(f"{k:20} {t[k].astimezone():%Y-%m-%d %H:%M}")
+        print(f"{'duree_min':20} {t['duree_min']:.0f}   (premier au dernier horodatage : base pour temps_reel_min)")
+    print(f"{'duree_agent_min':20} {t['duree_agent_min']:.0f}   (temps où l'agent travaillait, tours terminés seulement)")
     print_models("modele", t["modeles"], "orchestrateur")
-    print(f"{'sous_agents':18} {t['sous_agents']}")
+    print(f"{'sous_agents':20} {t['sous_agents']}")
     print_models("modele_sous_agents", t["modeles_sous_agents"], "sous-agents")
     for k in ("tours", "reponses", "entree", "cache_lu", "sortie"):
-        print(f"{k:18} {int(t[k])}")
-    print(f"{'cout_usd':18} {t['cout_usd']:.2f}")
-    if t["sous_agents"]:
-        print(f"{'dont sous-agents':18} sortie {int(t['sortie_sous_agents'])}, cout_usd {t['cout_sous_agents_usd']:.2f}")
+        print(f"{k:20} {int(t[k])}")
+    print(f"{'cout_usd':20} {t['cout_usd']:.2f}")
+    print(f"{'sortie_sous_agents':20} {int(t['sortie_sous_agents'])}")
+    print(f"{'cout_sous_agents_usd':20} {t['cout_sous_agents_usd']:.2f}")
     sub_model = t["modeles_sous_agents"][0][0] if t["modeles_sous_agents"] else ""
-    print("\nColonnes CSV (sous_agents,modele_sous_agents,tours,tokens_entree,tokens_cache_lu,tokens_sortie,cout_usd) :")
+    print("\nColonnes CSV (sous_agents,modele_sous_agents,tours,tokens_entree,tokens_cache_lu,tokens_sortie,cout_usd,"
+          "tokens_sortie_sous_agents,cout_sous_agents_usd) :")
     print(f"{t['sous_agents']},{sub_model},{int(t['tours'])},{int(t['entree'])},{int(t['cache_lu'])},"
-          f"{int(t['sortie'])},{t['cout_usd']:.2f}")
+          f"{int(t['sortie'])},{t['cout_usd']:.2f},{int(t['sortie_sous_agents'])},{t['cout_sous_agents_usd']:.2f}")
 
 
 if __name__ == "__main__":

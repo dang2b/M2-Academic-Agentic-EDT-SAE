@@ -28,12 +28,14 @@ Sert à mesurer :
 | `tokens_cache_lu` | tokens relus depuis le cache : contexte répété à chaque tour (donné par `tokens.py`) |
 | `tokens_sortie` | tokens générés par le modèle (donné par `tokens.py`) |
 | `cout_usd` | coût équivalent au tarif API, en $ (donné par `tokens.py`) |
+| `tokens_sortie_sous_agents` | part de `tokens_sortie` produite par les sous-agents, `0` si aucun (donné par `tokens.py`) |
+| `cout_sous_agents_usd` | part de `cout_usd` due aux sous-agents, `0` si aucun (donné par `tokens.py`) |
 | `commentaire` | ce qui a coincé, sans virgule ou entre guillemets |
 
 Exemple :
 
 ```csv
-2026-11-05,daniel,claude-sonnet-5-5,#12 routes /auth (login + refresh),auth,claude-code,60,95,30,3,non,2,claude-haiku-5-5,10,148076,1744442,28482,1.89,"bcrypt oublié, refresh token mal expiré"
+2026-11-05,daniel,claude-sonnet-5-5,#12 routes /auth (login + refresh),auth,claude-code,60,95,30,3,non,2,claude-haiku-5-5,10,148076,1744442,28482,1.89,6120,0.12,"bcrypt oublié, refresh token mal expiré"
 ```
 
 Ajoutez vos lignes **en fin de fichier** pour limiter les conflits git.
@@ -53,9 +55,9 @@ Notez l'heure de début de la tâche. À la fin, lancez :
 python journal/tokens.py --since "2026-11-05 14:00"   # ou sans argument : dernière session
 ```
 
-La dernière ligne affichée se colle telle quelle dans les colonnes `sous_agents` à `cout_usd`, et la ligne `modele` donne la colonne du même nom. Les commandes locales (`/model`, `/effort`…) ne comptent pas comme des tours : rien n'est envoyé au modèle. Le script lit les transcripts Claude Code locaux, sous-agents compris : chacun le lance sur sa propre machine.
+La dernière ligne affichée se colle telle quelle dans les colonnes `sous_agents` à `cout_sous_agents_usd`, et la ligne `modele` donne la colonne du même nom. Les commandes locales (`/model`, `/effort`…) ne comptent pas comme des tours : rien n'est envoyé au modèle. Le script lit les transcripts Claude Code locaux, sous-agents compris : chacun le lance sur sa propre machine.
 
-**Sous-agents** : les tokens et le coût additionnent l'orchestrateur et ses sous-agents, et chaque réponse est facturée au tarif de son propre modèle (un sous-agent Haiku sous un orchestrateur Opus est compté au tarif Haiku). Le script affiche à part la sortie et le coût des sous-agents (`dont sous-agents`) ; ils ne vont pas dans le CSV. Un sous-agent compte s'il a répondu au moins une fois dans la plage. Le temps se mesure comme sans sous-agent : il tourne pendant le tour de l'orchestrateur, donc il est déjà dans `duree_min` et `duree_agent_min`.
+**Sous-agents** : les tokens et le coût additionnent l'orchestrateur et ses sous-agents, et chaque réponse est facturée au tarif de son propre modèle (un sous-agent Haiku sous un orchestrateur Opus est compté au tarif Haiku). Les colonnes de totaux restent celles de toute la tâche ; `tokens_sortie_sous_agents` et `cout_sous_agents_usd` donnent la part des sous-agents, celle de l'orchestrateur s'obtient par différence. Le coût est la seule mesure comparable entre modèles, et il capte le coût fixe d'un sous-agent : chacun repart d'un contexte neuf (environ 70k tokens écrits en cache au démarrage), même pour une réponse courte. Un sous-agent compte s'il a répondu au moins une fois dans la plage. Le temps se mesure comme sans sous-agent : il tourne pendant le tour de l'orchestrateur, donc il est déjà dans `duree_min` et `duree_agent_min`.
 
 Le script affiche aussi des durées, calculées à partir des horodatages du transcript :
 - `debut`, `fin`, `duree_min` : du premier au dernier horodatage de la plage. C'est la base de `temps_reel_min`, à compléter avec le temps passé hors de Claude Code (IDE, GitHub, réunions).
@@ -98,6 +100,6 @@ Seuls les fichiers de code sont comptés (`.py`, `.ts`, `.tsx`, `.js`, `.sql`, `
 python journal/stats.py
 ```
 
-Les métriques sont aussi regroupées par usage des sous-agents (`avec`, `sans`, `?` si non renseigné) et par `modele_sous_agents`.
+Les métriques sont aussi regroupées par usage des sous-agents (`avec`, `sans`, `?` si non renseigné) et par `modele_sous_agents`, avec la part des sous-agents dans la sortie et dans le coût (`part_sortie_sous_agents`, `part_cout_sous_agents`).
 
 Les métriques 5 à 8 (défauts, dette, couverture/mutation, complexité/duplication) viendront de la CI, pas de ce journal.
