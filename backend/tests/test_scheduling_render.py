@@ -38,4 +38,4 @@ def test_algorithms_are_side_by_side_in_the_given_order():
     problem = demo()
     html = render_html(problem, {"greedy@1": solve(problem), "random@1": Solution()}, "demo")
     assert html.index("greedy@1") < html.index("random@1")
-    assert html.count("<h3>") == 2 and "repeat(2, 646px)" in html
+    assert html.count("<h3>") == 2 and "repeat(2, minmax(0, 1fr))" in html

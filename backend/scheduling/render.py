@@ -18,18 +18,17 @@ from scheduling.io import INSTANCES_DIR, load_instance
 from scheduling.model import Placement, Problem, Solution
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
-WEEK_WIDTH_PX = 44 + 5 * 120 + 2  # time column, 5 day columns, borders (see .week)
 DAYS = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi")
 COLORS = {"CM": "#cfe0fc", "TD": "#d3f2d6", "TP": "#fde2c4", "EXAM": "#f8cfd0"}
 
 CSS = """
-body { font-family: system-ui, sans-serif; margin: 24px; color: #1d1d1f; background: #fff; }
-.compare { display: grid; gap: 24px; align-items: start; }
+body { font-family: system-ui, sans-serif; margin: 16px; color: #1d1d1f; background: #fff; }
+.compare { display: grid; gap: 16px; align-items: start; min-width: 900px; }
 h2 { font-size: 18px; margin: 0; }
 .summary { font-size: 13px; margin: 4px 0 0; }
 .ok { color: #1a7f37; } .ko { color: #c62828; }
 h3 { font-size: 14px; margin: 24px 0 6px; }
-.week { display: grid; grid-template-columns: 44px repeat(5, 120px); grid-auto-rows: 22px; font-size: 11px;
+.week { display: grid; grid-template-columns: 40px repeat(5, minmax(0, 1fr)); grid-auto-rows: 22px; font-size: 11px;
         border: 1px solid #ccc; }
 .head { text-align: center; font-weight: 600; padding: 3px; border-bottom: 1px solid #ccc; }
 .time { color: #777; padding-right: 4px; text-align: right; border-top: 1px dotted #e5e5e5; }
@@ -118,8 +117,8 @@ def _summary(problem: Problem, label: str, solution: Solution) -> str:
 
 def _row_of(cells: list[str]) -> str:
     """One column per algorithm, in the order given, side by side."""
-    # Fixed column width (one week grid) so summaries line up with the grids below them
-    return f'<div class="compare" style="grid-template-columns:repeat({len(cells)}, {WEEK_WIDTH_PX}px)">{"".join(cells)}</div>'
+    # Equal shares of the page width, so summaries line up with the grids below at any zoom
+    return f'<div class="compare" style="grid-template-columns:repeat({len(cells)}, minmax(0, 1fr))">{"".join(cells)}</div>'
 
 
 def _spread(items: list, count: int) -> list:
