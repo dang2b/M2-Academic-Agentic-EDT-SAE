@@ -8,7 +8,7 @@
 - [ ] Base partagée et déploiement final : où, qui héberge (« décidé avant la phase de dev » selon le cadrage).
 - [ ] Données manquantes pour le MVP : jours fériés, salles spécialisées TP (`rooms.room_type` existe, mais rien n'indique quel type de séance ou quelle matière l'exige). Les créneaux horaires sont tranchés (voir Génération).
 - [ ] Écarts de schéma déjà listés dans `CHANGELOG-schema-api.md`.
-- [ ] Valider ou refuser les 2 lignes `proposé` du changelog (passage à Alembic, pagination de `GET /roles`) : en attente depuis le 2026-11-05, et le délai de validation est une métrique (M10).
+- [x] Valider les 2 lignes du changelog (passage à Alembic, pagination de `GET /roles`) : acceptées par Daniel le 2026-11-13.
 - [ ] Quand utiliser l'ORM, quand utiliser du SQL brut (#9).
 - [ ] Organisation : sprints, tableau GitHub Projects, rétros dans `docs/retros/`.
 
@@ -88,7 +88,7 @@ Algorithmes (`backend/scheduling/`, Python pur) :
 ## Rapport et soutenance
 
 - [x] État de l'art (#3), justification des choix (#18), modélisation et historique des algorithmes commencés (#24), dans `rapport/`.
-- [ ] `rapport/etat-de-l-art.typ:52` cite encore `CLAUDE.md` : remplacer par `AGENTS.md`, puis recompiler.
+- [x] `rapport/etat-de-l-art.typ` cite `AGENTS.md` (et non plus `CLAUDE.md`).
 - [ ] Comparaison avec le groupe 2 : quelles métriques communes, et leurs données sont-elles comparables (même format de journal) ?
 - [ ] Sujets proposés dans l'issue #5 :
   - confidentialité et rétention des données envoyées aux IA ;
