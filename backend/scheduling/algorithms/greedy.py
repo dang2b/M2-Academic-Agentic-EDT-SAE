@@ -12,7 +12,7 @@ import random
 
 from scheduling.algorithms.base import Algorithm
 from scheduling.model import Placement, Problem, SessionRequest, Solution
-from scheduling.occupancy import Occupancy, eligible_rooms
+from scheduling.occupancy import Occupancy, eligible_rooms, feasible_placements
 
 
 def placement_order(problem: Problem) -> list[SessionRequest]:
@@ -24,15 +24,7 @@ def placement_order(problem: Problem) -> list[SessionRequest]:
 
 
 def first_fit(problem: Problem, occupancy: Occupancy, session: SessionRequest) -> Placement | None:
-    rooms = eligible_rooms(problem, session)
-    for day, start in problem.grid.starts(session.duration_min):
-        end = start + session.duration_min
-        if not occupancy.people_free(session, day, start, end):
-            continue
-        for room in rooms:
-            if occupancy.room_free(room.id, day, start, end):
-                return Placement(session.id, day, start, end, room.id)
-    return None
+    return next(feasible_placements(problem, occupancy, session), None)
 
 
 def solve(problem: Problem, rng: random.Random | None = None, time_limit_s: float | None = None) -> Solution:

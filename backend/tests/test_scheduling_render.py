@@ -1,7 +1,7 @@
 from scheduling.algorithms.greedy import solve
 from scheduling.examples import AMPHI, CLASSROOM, demo, tiny
 from scheduling.model import Placement, Solution, hm
-from scheduling.render import main, render_html, select_groups
+from scheduling.render import main, parse_tabs, render_html, select_groups
 
 
 def test_page_shows_each_algorithm_and_each_student_group():
@@ -39,3 +39,24 @@ def test_algorithms_are_side_by_side_in_the_given_order():
     html = render_html(problem, {"greedy@1": solve(problem), "random@1": Solution()}, "demo")
     assert html.index("greedy@1") < html.index("random@1")
     assert html.count("<h3>") == 2 and "repeat(2, minmax(0, 1fr))" in html
+
+
+def test_one_tab_per_comparison_with_buttons():
+    problem = demo()
+    solutions = {"greedy@1": solve(problem), "random@1": Solution(), "dsatur@1": Solution()}
+    html = render_html(problem, solutions, "demo", tabs=[("greedy@1", "random@1"), ("greedy@1", "dsatur@1")])
+    assert html.count('<section class="tab"') == 2 and html.count("<button") == 2
+    assert "Glouton / Hasard" in html and "Glouton / DSatur" in html
+    assert '<section class="tab" hidden>' in html  # second tab hidden until clicked
+
+
+def test_tabs_from_the_command_line():
+    assert parse_tabs(None, None) == [("greedy@1", "random@1"), ("greedy@1", "dsatur@1")]
+    assert parse_tabs(["greedy@1,dsatur@1,random@1"], None) == [("greedy@1", "dsatur@1", "random@1")]
+    assert parse_tabs(None, ["greedy@1"]) == [("greedy@1",)]
+
+
+def test_unplaced_sessions_are_listed_by_name():
+    problem = tiny()
+    html = render_html(problem, {"empty": Solution()}, "t")
+    assert "Non placées : CM #1 (Promo)" in html

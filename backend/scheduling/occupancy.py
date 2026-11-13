@@ -1,5 +1,6 @@
 """Who is busy when, shared by every algorithm that builds a solution step by step."""
 from collections import defaultdict
+from collections.abc import Iterator
 
 from scheduling.model import Placement, Problem, Room, SessionRequest
 
@@ -51,3 +52,15 @@ class Occupancy:
         for group in session.group_ids:
             self._groups[(group, placement.day)].append(interval)
         self._rooms[(placement.room_id, placement.day)].append(interval)
+
+
+def feasible_placements(problem: Problem, occupancy: Occupancy, session: SessionRequest) -> Iterator[Placement]:
+    """Every start where the session fits right now, in chronological order, with its smallest free room."""
+    rooms = eligible_rooms(problem, session)
+    for day, start in problem.grid.starts(session.duration_min):
+        end = start + session.duration_min
+        if not occupancy.people_free(session, day, start, end):
+            continue
+        room = next((r for r in rooms if occupancy.room_free(r.id, day, start, end)), None)
+        if room is not None:
+            yield Placement(session.id, day, start, end, room.id)
