@@ -22,39 +22,46 @@
   {
    "id": 100,
    "capacity": 100,
-   "room_type": null
+   "room_type": null,
+   "name": "Amphi"
   },
   {
    "id": 101,
    "capacity": 35,
-   "room_type": null
+   "room_type": null,
+   "name": "Salle 35 places"
   },
   {
    "id": 102,
    "capacity": 20,
-   "room_type": "TP_INFO"
+   "room_type": "TP_INFO",
+   "name": "Salle TP"
   }
  ],
  "groups": [
   {
    "id": 1,
    "size": 60,
-   "parent_id": null
+   "parent_id": null,
+   "name": "Promo"
   },
   {
    "id": 2,
    "size": 30,
-   "parent_id": 1
+   "parent_id": 1,
+   "name": "TD1"
   },
   {
    "id": 3,
    "size": 30,
-   "parent_id": 1
+   "parent_id": 1,
+   "name": "TD2"
   },
   {
    "id": 4,
    "size": 15,
-   "parent_id": 2
+   "parent_id": 2,
+   "name": "TP1a"
   }
  ],
  "sessions": [
@@ -69,7 +76,8 @@
    ],
    "session_type": "CM",
    "subject_id": null,
-   "room_type": null
+   "room_type": null,
+   "label": null
   },
   {
    "id": 2,
@@ -82,7 +90,8 @@
    ],
    "session_type": "TD",
    "subject_id": null,
-   "room_type": null
+   "room_type": null,
+   "label": null
   },
   {
    "id": 3,
@@ -95,7 +104,8 @@
    ],
    "session_type": "TD",
    "subject_id": null,
-   "room_type": null
+   "room_type": null,
+   "label": null
   },
   {
    "id": 4,
@@ -108,7 +118,8 @@
    ],
    "session_type": "TP",
    "subject_id": null,
-   "room_type": "TP_INFO"
+   "room_type": "TP_INFO",
+   "label": null
   }
  ],
  "teacher_unavailabilities": [
@@ -134,5 +145,9 @@
    "half_day": "MORNING",
    "weight": 1
   }
- ]
+ ],
+ "teacher_names": {
+  "10": "Alice",
+  "11": "Bob"
+ }
 }

@@ -8,7 +8,8 @@ def test_page_shows_each_algorithm_and_each_student_group():
     problem = tiny()
     html = render_html(problem, {"greedy@1": solve(problem)}, "Instance tiny")
     assert "greedy@1" in html and "valide" in html
-    assert html.count("<h3>Groupe") == 2  # TD2 and TP1A, the finest groups
+    assert html.count("<h3>Étudiant de") == 2  # TD2 and TP1a, the finest groups
+    assert "Étudiant de TP1a (avec les cours de TD1, Promo)" in html
     assert "conflict" not in html.split("</style>")[1]  # a valid timetable has no red box
 
 

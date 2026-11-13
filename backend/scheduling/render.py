@@ -59,16 +59,29 @@ def _background(problem: Problem) -> list[str]:
     return cells
 
 
-def _class_box(problem: Problem, p: Placement, conflict: bool) -> str:
+def _group_name(problem: Problem, group_id: int) -> str:
+    return problem.groups_by_id[group_id].name or f"groupe {group_id}"
+
+
+def _ancestors(problem: Problem, group_id: int) -> list[int]:
+    chain, parent = [], problem.groups_by_id[group_id].parent_id
+    while parent is not None:
+        chain.append(parent)
+        parent = problem.groups_by_id[parent].parent_id
+    return chain
+
+
+def _class_box(problem: Problem, p: Placement, conflict: bool, shift: int = 0) -> str:
     session = problem.sessions_by_id[p.session_id]
-    teachers = ", ".join(str(t) for t in sorted(session.teacher_ids))
-    groups = ", ".join(str(g) for g in sorted(session.group_ids))
+    title = f"{session.session_type} {session.label or f'#{session.id}'}"
+    teachers = ", ".join(problem.teacher_names.get(t, f"prof {t}") for t in sorted(session.teacher_ids))
+    room = problem.rooms_by_id[p.room_id].name or f"salle {p.room_id}"
     color = COLORS.get(session.session_type, "#eee")
     css = "class conflict" if conflict else "class"
     return (
         f'<div class="{css}" style="grid-row:{_row(problem, p.start_min)}/{_row(problem, p.end_min)};'
-        f'grid-column:{p.day + 2};background:{color}">'
-        f"<b>{escape(session.session_type)} #{session.id}</b> · gr. {groups}<br>prof {teachers} · salle {p.room_id}</div>"
+        f'grid-column:{p.day + 2};background:{color};margin-left:{2 + 14 * shift}px" title="{escape(title)}">'
+        f"<b>{escape(title)}</b><br>{escape(teachers)} · {escape(room)}</div>"
     )
 
 
@@ -76,8 +89,19 @@ def _week(problem: Problem, timetable: list[Placement]) -> str:
     head = ['<div class="head" style="grid-column:1"></div>'] + [
         f'<div class="head" style="grid-column:{d + 2}">{DAYS[d]}</div>' for d in range(problem.grid.days)
     ]
-    boxes = [_class_box(problem, p, any(p is not q and p.overlaps(q) for q in timetable)) for p in timetable]
+    ordered = sorted(timetable, key=lambda p: (p.day, p.start_min, p.session_id))
+    boxes = []
+    for i, p in enumerate(ordered):
+        conflict = any(p is not q and p.overlaps(q) for q in ordered)
+        shift = sum(p.overlaps(q) for q in ordered[:i])  # offset so overlapping classes stay visible
+        boxes.append(_class_box(problem, p, conflict, shift))
     return '<div class="week">' + "".join(head + _background(problem) + boxes) + "</div>"
+
+
+def _heading(problem: Problem, group_id: int) -> str:
+    parents = [_group_name(problem, g) for g in _ancestors(problem, group_id)]
+    suffix = f" (avec les cours de {', '.join(parents)})" if parents else ""
+    return f"Étudiant de {_group_name(problem, group_id)}{suffix}"
 
 
 def _algorithm_column(problem: Problem, label: str, solution: Solution) -> str:
@@ -88,7 +112,7 @@ def _algorithm_column(problem: Problem, label: str, solution: Solution) -> str:
         f"score souple {result.soft_score:.2f}"
     )
     grids = "".join(
-        f"<h3>Groupe {group} (avec ses groupes parents)</h3>{_week(problem, timetable)}"
+        f"<h3>{escape(_heading(problem, group))}</h3>{_week(problem, timetable)}"
         for group, timetable in leaf_timetables(problem, list(solution.placements.values())).items()
     )
     return f'<section><h2>{escape(label)}</h2><p class="summary">{summary}</p>{grids}</section>'

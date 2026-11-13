@@ -50,6 +50,7 @@ class Room:
     id: int
     capacity: int
     room_type: str | None = None  # e.g. "TP_INFO"; None for an ordinary room
+    name: str | None = None  # display only
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +58,7 @@ class Group:
     id: int
     size: int
     parent_id: int | None = None  # a TD group belongs to its promotion, a TP group to its TD group
+    name: str | None = None  # display only
 
 
 @dataclass(frozen=True, slots=True)
@@ -70,6 +72,7 @@ class SessionRequest:
     session_type: str = "CM"
     subject_id: int | None = None
     room_type: str | None = None  # required room type, None if any room fits
+    label: str | None = None  # subject name, display only
 
 
 @dataclass(frozen=True, slots=True)
@@ -125,6 +128,7 @@ class Problem:
     preferences: tuple[Preference, ...] = ()
     grid: TimeGrid = field(default_factory=TimeGrid)
     week: int | None = None  # week number in the semester, for reports only
+    teacher_names: dict[int, str] = field(default_factory=dict)  # display only
 
     # Derived lookups, computed once in __post_init__
     rooms_by_id: dict[int, Room] = field(init=False, repr=False)
