@@ -1,0 +1,644 @@
+{
+ "week": null,
+ "grid": {
+  "days": 5,
+  "blocks": [
+   [
+    510,
+    720
+   ],
+   [
+    810,
+    1110
+   ]
+  ],
+  "step_min": 30,
+  "durations_min": [
+   60,
+   90
+  ]
+ },
+ "rooms": [
+  {
+   "id": 100,
+   "capacity": 120,
+   "room_type": null,
+   "name": "Amphi A"
+  },
+  {
+   "id": 101,
+   "capacity": 35,
+   "room_type": null,
+   "name": "Salle 101"
+  },
+  {
+   "id": 102,
+   "capacity": 35,
+   "room_type": null,
+   "name": "Salle 102"
+  },
+  {
+   "id": 103,
+   "capacity": 30,
+   "room_type": null,
+   "name": "Salle 103"
+  },
+  {
+   "id": 110,
+   "capacity": 18,
+   "room_type": "TP_INFO",
+   "name": "Labo 1"
+  },
+  {
+   "id": 111,
+   "capacity": 18,
+   "room_type": "TP_INFO",
+   "name": "Labo 2"
+  }
+ ],
+ "groups": [
+  {
+   "id": 1,
+   "size": 90,
+   "parent_id": null,
+   "name": "L3 Info"
+  },
+  {
+   "id": 2,
+   "size": 30,
+   "parent_id": 1,
+   "name": "TD A"
+  },
+  {
+   "id": 3,
+   "size": 30,
+   "parent_id": 1,
+   "name": "TD B"
+  },
+  {
+   "id": 4,
+   "size": 30,
+   "parent_id": 1,
+   "name": "TD C"
+  },
+  {
+   "id": 5,
+   "size": 15,
+   "parent_id": 2,
+   "name": "TP A1"
+  },
+  {
+   "id": 6,
+   "size": 15,
+   "parent_id": 2,
+   "name": "TP A2"
+  },
+  {
+   "id": 7,
+   "size": 15,
+   "parent_id": 3,
+   "name": "TP B1"
+  },
+  {
+   "id": 8,
+   "size": 15,
+   "parent_id": 3,
+   "name": "TP B2"
+  },
+  {
+   "id": 9,
+   "size": 15,
+   "parent_id": 4,
+   "name": "TP C1"
+  },
+  {
+   "id": 10,
+   "size": 15,
+   "parent_id": 4,
+   "name": "TP C2"
+  }
+ ],
+ "sessions": [
+  {
+   "id": 1,
+   "duration_min": 90,
+   "teacher_ids": [
+    20
+   ],
+   "group_ids": [
+    1
+   ],
+   "session_type": "CM",
+   "subject_id": 1,
+   "room_type": null,
+   "label": "Algorithmique"
+  },
+  {
+   "id": 2,
+   "duration_min": 90,
+   "teacher_ids": [
+    20
+   ],
+   "group_ids": [
+    2
+   ],
+   "session_type": "TD",
+   "subject_id": 1,
+   "room_type": null,
+   "label": "Algorithmique"
+  },
+  {
+   "id": 3,
+   "duration_min": 90,
+   "teacher_ids": [
+    20
+   ],
+   "group_ids": [
+    3
+   ],
+   "session_type": "TD",
+   "subject_id": 1,
+   "room_type": null,
+   "label": "Algorithmique"
+  },
+  {
+   "id": 4,
+   "duration_min": 90,
+   "teacher_ids": [
+    21
+   ],
+   "group_ids": [
+    4
+   ],
+   "session_type": "TD",
+   "subject_id": 1,
+   "room_type": null,
+   "label": "Algorithmique"
+  },
+  {
+   "id": 5,
+   "duration_min": 90,
+   "teacher_ids": [
+    21
+   ],
+   "group_ids": [
+    5
+   ],
+   "session_type": "TP",
+   "subject_id": 1,
+   "room_type": "TP_INFO",
+   "label": "Algorithmique"
+  },
+  {
+   "id": 6,
+   "duration_min": 90,
+   "teacher_ids": [
+    21
+   ],
+   "group_ids": [
+    6
+   ],
+   "session_type": "TP",
+   "subject_id": 1,
+   "room_type": "TP_INFO",
+   "label": "Algorithmique"
+  },
+  {
+   "id": 7,
+   "duration_min": 90,
+   "teacher_ids": [
+    21
+   ],
+   "group_ids": [
+    7
+   ],
+   "session_type": "TP",
+   "subject_id": 1,
+   "room_type": "TP_INFO",
+   "label": "Algorithmique"
+  },
+  {
+   "id": 8,
+   "duration_min": 90,
+   "teacher_ids": [
+    21
+   ],
+   "group_ids": [
+    8
+   ],
+   "session_type": "TP",
+   "subject_id": 1,
+   "room_type": "TP_INFO",
+   "label": "Algorithmique"
+  },
+  {
+   "id": 9,
+   "duration_min": 90,
+   "teacher_ids": [
+    21
+   ],
+   "group_ids": [
+    9
+   ],
+   "session_type": "TP",
+   "subject_id": 1,
+   "room_type": "TP_INFO",
+   "label": "Algorithmique"
+  },
+  {
+   "id": 10,
+   "duration_min": 90,
+   "teacher_ids": [
+    21
+   ],
+   "group_ids": [
+    10
+   ],
+   "session_type": "TP",
+   "subject_id": 1,
+   "room_type": "TP_INFO",
+   "label": "Algorithmique"
+  },
+  {
+   "id": 11,
+   "duration_min": 90,
+   "teacher_ids": [
+    22
+   ],
+   "group_ids": [
+    1
+   ],
+   "session_type": "CM",
+   "subject_id": 2,
+   "room_type": null,
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 12,
+   "duration_min": 90,
+   "teacher_ids": [
+    22
+   ],
+   "group_ids": [
+    2
+   ],
+   "session_type": "TD",
+   "subject_id": 2,
+   "room_type": null,
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 13,
+   "duration_min": 90,
+   "teacher_ids": [
+    22
+   ],
+   "group_ids": [
+    3
+   ],
+   "session_type": "TD",
+   "subject_id": 2,
+   "room_type": null,
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 14,
+   "duration_min": 90,
+   "teacher_ids": [
+    22
+   ],
+   "group_ids": [
+    4
+   ],
+   "session_type": "TD",
+   "subject_id": 2,
+   "room_type": null,
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 15,
+   "duration_min": 90,
+   "teacher_ids": [
+    23
+   ],
+   "group_ids": [
+    5
+   ],
+   "session_type": "TP",
+   "subject_id": 2,
+   "room_type": "TP_INFO",
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 16,
+   "duration_min": 90,
+   "teacher_ids": [
+    23
+   ],
+   "group_ids": [
+    6
+   ],
+   "session_type": "TP",
+   "subject_id": 2,
+   "room_type": "TP_INFO",
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 17,
+   "duration_min": 90,
+   "teacher_ids": [
+    23
+   ],
+   "group_ids": [
+    7
+   ],
+   "session_type": "TP",
+   "subject_id": 2,
+   "room_type": "TP_INFO",
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 18,
+   "duration_min": 90,
+   "teacher_ids": [
+    23
+   ],
+   "group_ids": [
+    8
+   ],
+   "session_type": "TP",
+   "subject_id": 2,
+   "room_type": "TP_INFO",
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 19,
+   "duration_min": 90,
+   "teacher_ids": [
+    23
+   ],
+   "group_ids": [
+    9
+   ],
+   "session_type": "TP",
+   "subject_id": 2,
+   "room_type": "TP_INFO",
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 20,
+   "duration_min": 90,
+   "teacher_ids": [
+    23
+   ],
+   "group_ids": [
+    10
+   ],
+   "session_type": "TP",
+   "subject_id": 2,
+   "room_type": "TP_INFO",
+   "label": "Bases de donn\u00e9es"
+  },
+  {
+   "id": 21,
+   "duration_min": 60,
+   "teacher_ids": [
+    24
+   ],
+   "group_ids": [
+    1
+   ],
+   "session_type": "CM",
+   "subject_id": 3,
+   "room_type": null,
+   "label": "R\u00e9seaux"
+  },
+  {
+   "id": 22,
+   "duration_min": 90,
+   "teacher_ids": [
+    24
+   ],
+   "group_ids": [
+    5
+   ],
+   "session_type": "TP",
+   "subject_id": 3,
+   "room_type": "TP_INFO",
+   "label": "R\u00e9seaux"
+  },
+  {
+   "id": 23,
+   "duration_min": 90,
+   "teacher_ids": [
+    24
+   ],
+   "group_ids": [
+    6
+   ],
+   "session_type": "TP",
+   "subject_id": 3,
+   "room_type": "TP_INFO",
+   "label": "R\u00e9seaux"
+  },
+  {
+   "id": 24,
+   "duration_min": 90,
+   "teacher_ids": [
+    24
+   ],
+   "group_ids": [
+    7
+   ],
+   "session_type": "TP",
+   "subject_id": 3,
+   "room_type": "TP_INFO",
+   "label": "R\u00e9seaux"
+  },
+  {
+   "id": 25,
+   "duration_min": 90,
+   "teacher_ids": [
+    24
+   ],
+   "group_ids": [
+    8
+   ],
+   "session_type": "TP",
+   "subject_id": 3,
+   "room_type": "TP_INFO",
+   "label": "R\u00e9seaux"
+  },
+  {
+   "id": 26,
+   "duration_min": 90,
+   "teacher_ids": [
+    24
+   ],
+   "group_ids": [
+    9
+   ],
+   "session_type": "TP",
+   "subject_id": 3,
+   "room_type": "TP_INFO",
+   "label": "R\u00e9seaux"
+  },
+  {
+   "id": 27,
+   "duration_min": 90,
+   "teacher_ids": [
+    24
+   ],
+   "group_ids": [
+    10
+   ],
+   "session_type": "TP",
+   "subject_id": 3,
+   "room_type": "TP_INFO",
+   "label": "R\u00e9seaux"
+  },
+  {
+   "id": 28,
+   "duration_min": 90,
+   "teacher_ids": [
+    25
+   ],
+   "group_ids": [
+    1
+   ],
+   "session_type": "CM",
+   "subject_id": 4,
+   "room_type": null,
+   "label": "G\u00e9nie logiciel"
+  },
+  {
+   "id": 29,
+   "duration_min": 60,
+   "teacher_ids": [
+    25
+   ],
+   "group_ids": [
+    2
+   ],
+   "session_type": "TD",
+   "subject_id": 4,
+   "room_type": null,
+   "label": "G\u00e9nie logiciel"
+  },
+  {
+   "id": 30,
+   "duration_min": 60,
+   "teacher_ids": [
+    25
+   ],
+   "group_ids": [
+    3
+   ],
+   "session_type": "TD",
+   "subject_id": 4,
+   "room_type": null,
+   "label": "G\u00e9nie logiciel"
+  },
+  {
+   "id": 31,
+   "duration_min": 60,
+   "teacher_ids": [
+    25
+   ],
+   "group_ids": [
+    4
+   ],
+   "session_type": "TD",
+   "subject_id": 4,
+   "room_type": null,
+   "label": "G\u00e9nie logiciel"
+  },
+  {
+   "id": 32,
+   "duration_min": 90,
+   "teacher_ids": [
+    26
+   ],
+   "group_ids": [
+    2
+   ],
+   "session_type": "TD",
+   "subject_id": 5,
+   "room_type": null,
+   "label": "Anglais"
+  },
+  {
+   "id": 33,
+   "duration_min": 90,
+   "teacher_ids": [
+    26
+   ],
+   "group_ids": [
+    3
+   ],
+   "session_type": "TD",
+   "subject_id": 5,
+   "room_type": null,
+   "label": "Anglais"
+  },
+  {
+   "id": 34,
+   "duration_min": 90,
+   "teacher_ids": [
+    26
+   ],
+   "group_ids": [
+    4
+   ],
+   "session_type": "TD",
+   "subject_id": 5,
+   "room_type": null,
+   "label": "Anglais"
+  }
+ ],
+ "teacher_unavailabilities": [
+  {
+   "resource_id": 20,
+   "day": 0,
+   "start_min": 510,
+   "end_min": 1110
+  },
+  {
+   "resource_id": 23,
+   "day": 2,
+   "start_min": 510,
+   "end_min": 1110
+  }
+ ],
+ "room_unavailabilities": [
+  {
+   "resource_id": 111,
+   "day": 4,
+   "start_min": 810,
+   "end_min": 1110
+  }
+ ],
+ "preferences": [
+  {
+   "teacher_id": 26,
+   "day": null,
+   "half_day": "AFTERNOON",
+   "weight": 1
+  },
+  {
+   "teacher_id": 22,
+   "day": 1,
+   "half_day": null,
+   "weight": 1
+  }
+ ],
+ "teacher_names": {
+  "20": "Martin",
+  "21": "Durand",
+  "22": "Bernard",
+  "23": "Petit",
+  "24": "Robert",
+  "25": "Moreau",
+  "26": "Leroy"
+ }
+}
