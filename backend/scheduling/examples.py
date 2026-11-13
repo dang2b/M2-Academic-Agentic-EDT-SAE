@@ -105,3 +105,22 @@ def demo() -> Problem:
             ROBERT: "Robert", MOREAU: "Moreau", LEROY: "Leroy",
         },  # fmt: skip
     )
+
+
+def tight() -> Problem:
+    """`demo` with fewer resources, where the order of placement decides what fits.
+
+    One TD room and one lab for 18 TP classes; Robert only comes on Monday and Friday for his
+    7 classes, Petit is away on Wednesday and Thursday, Bernard on Tuesday, Leroy on Friday.
+    """
+    base = demo()
+    day = (hm(8, 30), hm(18, 30))
+    away = {BERNARD: (1,), PETIT: (2, 3), ROBERT: (1, 2, 3), LEROY: (4,)}
+    return Problem(
+        rooms=tuple(r for r in base.rooms if r.name in ("Amphi A", "Salle 101", "Labo 1")),
+        groups=base.groups,
+        sessions=base.sessions,
+        teacher_unavailabilities=tuple(Unavailability(t, d, *day) for t, days in away.items() for d in days),
+        preferences=base.preferences,
+        teacher_names=base.teacher_names,
+    )
