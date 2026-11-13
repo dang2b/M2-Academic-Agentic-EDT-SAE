@@ -21,6 +21,7 @@ def problem_to_dict(problem: Problem) -> dict:
         "teacher_unavailabilities": [asdict(u) for u in problem.teacher_unavailabilities],
         "room_unavailabilities": [asdict(u) for u in problem.room_unavailabilities],
         "preferences": [asdict(p) for p in problem.preferences],
+        "teacher_names": {str(t): name for t, name in sorted(problem.teacher_names.items())},
     }
 
 
@@ -43,6 +44,7 @@ def problem_from_dict(data: dict) -> Problem:
         teacher_unavailabilities=tuple(Unavailability(**u) for u in data.get("teacher_unavailabilities", [])),
         room_unavailabilities=tuple(Unavailability(**u) for u in data.get("room_unavailabilities", [])),
         preferences=tuple(Preference(**p) for p in data.get("preferences", [])),
+        teacher_names={int(t): name for t, name in data.get("teacher_names", {}).items()},
     )
 
 

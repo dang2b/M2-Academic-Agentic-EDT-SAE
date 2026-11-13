@@ -6,8 +6,9 @@
 
 - [ ] Contrat d'API EDT avec le groupe 2 : séances, génération, disponibilités, vues. Rien n'est défini au-delà du socle (`docs/infos.md`).
 - [ ] Base partagée et déploiement final : où, qui héberge (« décidé avant la phase de dev » selon le cadrage).
-- [ ] Données manquantes pour le MVP : jours fériés, créneaux horaires possibles, salles spécialisées TP (`room_type` ou `equipments` ?).
+- [ ] Données manquantes pour le MVP : jours fériés, salles spécialisées TP (`rooms.room_type` existe, mais rien n'indique quel type de séance ou quelle matière l'exige). Les créneaux horaires sont tranchés (voir Génération).
 - [ ] Écarts de schéma déjà listés dans `CHANGELOG-schema-api.md`.
+- [x] Valider les 2 lignes du changelog (passage à Alembic, pagination de `GET /roles`) : acceptées par Daniel le 2026-11-13.
 - [ ] Quand utiliser l'ORM, quand utiliser du SQL brut (#9).
 - [ ] Organisation : sprints, tableau GitHub Projects, rétros dans `docs/retros/`.
 
@@ -24,14 +25,25 @@
 
 ## Génération (DE)
 
-- [ ] Modèle du problème en mémoire dans `backend/scheduling/`.
-- [ ] Validateur : contraintes dures violées (doit valoir 0), score des contraintes souples.
-- [ ] Générateur de jeux de données de tailles croissantes.
-- [ ] V1 glouton, V2 coloration de graphe, V3 recuit simulé : complexité, limites, historique des versions.
-- [ ] Benchmark M9 : qualité et temps selon la taille.
-- Questions :
-  - Granularité des créneaux : heure, demi-heure ?
-  - Générer une semaine type répétée, ou tout le semestre ?
+Décisions prises (détail dans `rapport/algorithme.typ`) : du lundi au vendredi, 8 h 30–12 h et 13 h 30–18 h 30, pas de 30 min, cours de 1 h ou 1 h 30 ; génération semaine par semaine ; trous pénalisés en priorité (1 point si moins d'une heure, 3 par heure sinon) ; pas de solveur externe (OR-Tools) pour l'instant.
+
+Données :
+- [ ] Table des **affectations d'enseignement** (prof, matière, type de séance, groupe, durée), avec sa migration et sa ligne de changelog : entrée principale de la génération.
+- [ ] Table des jours fériés, avec sa migration.
+- [ ] Répartition des volumes horaires du semestre en séances à placer, semaine par semaine, jours fériés exclus.
+- [ ] Générateur de jeux de données (petit, moyen, grand), écrits en instances JSON dans `backend/scheduling/instances/`.
+- [ ] Passerelle base ↔ modèle : charger la base dans `scheduling/`, réécrire la solution sous forme de séances.
+
+Algorithmes (`backend/scheduling/`, Python pur) :
+- [x] Modèle du problème en mémoire, graphe des conflits (#17).
+- [x] Évaluateur commun : contraintes dures par type, séances non placées, score souple (#17).
+- [x] Banc de comparaison : interface commune, `random@1` comme référence, résultats en CSV (#17).
+- [x] V1 glouton `greedy@1` (#23).
+- [ ] V2 coloration de graphe `dsatur@1`.
+- [ ] V3 recuit simulé `annealing@1`.
+- [ ] Piste : `greedy@2`, créneau le moins chargé plutôt que le premier (corrige le déséquilibre de la V1).
+- [ ] Benchmark M9 sur les instances générées : qualité et temps selon la taille.
+- Questions restantes :
   - Examens, rattrapages, changements en cours de semestre : générés ou saisis à la main ?
   - Correction manuelle après génération : comment garantir qu'elle ne casse pas les contraintes ?
 
@@ -58,7 +70,7 @@
   - [ ] Préparer le VPS : dossier du projet, `.env` hors GitHub (`POSTGRES_PASSWORD` fort, `CORS_ORIGINS`, plus tard le secret JWT), `docker login ghcr.io` si le package est privé.
   - [ ] Package ghcr (`ghcr.io/dang2b/...`) public, ou lié au dépôt avec héritage des droits : sinon le `GHCR_PAT` de Thomas ne peut pas le télécharger. À vérifier après le premier push.
   - [ ] Vhost nginx (déjà installé sur l'hôte) vers `127.0.0.1:8000`, nom de domaine, HTTPS.
-  - [ ] Protection de branche sur `main` (PR obligatoire), pour que seul un merge déclenche le déploiement. Réservé à un admin du dépôt (Daniel).
+  - [x] Protection de `main` et `dev` (ruleset GitHub : PR obligatoire, pas de force push ni de suppression), mise en place le 2026-11-06.
   - [ ] Tests obligatoires avant le déploiement.
   - [ ] Sauvegardes de la base (`pg_dump` planifié).
 - [ ] Tests e2e, charge (k6/locust), Lighthouse, questionnaire SUS.
@@ -67,15 +79,19 @@
 
 - [ ] Une ligne de journal par tâche, avec l'estimation notée **avant** de commencer.
 - [ ] `tokens.py` pour les autres outils, dont OpenCode (#8).
-- [ ] Formaliser l'architecture agentique : sous-agents, skills, hooks, et ce que chacun apporte (coût fixe `infra-agent`).
+- [ ] Formaliser l'architecture agentique (`rapport/architecture-agentique.typ`) :
+  - [x] socle commun, configurations de Daniel (#16) et de Thomas (#20) ;
+  - [ ] sections de Clément, Simon et Thibaut ;
+  - [ ] mesurer ce qu'apportent sous-agents, skills et hooks (coût fixe `infra-agent`).
 - [ ] Une rétro par sprint.
 
 ## Rapport et soutenance
 
-- [ ] `rapport/etat-de-l-art.typ:52` cite encore `CLAUDE.md` : remplacer par `AGENTS.md`, puis recompiler.
+- [x] État de l'art (#3), justification des choix (#18), modélisation et historique des algorithmes commencés (#24), dans `rapport/`.
+- [x] `rapport/etat-de-l-art.typ` cite `AGENTS.md` (et non plus `CLAUDE.md`).
 - [ ] Comparaison avec le groupe 2 : quelles métriques communes, et leurs données sont-elles comparables (même format de journal) ?
 - [ ] Sujets proposés dans l'issue #5 :
   - confidentialité et rétention des données envoyées aux IA ;
   - écologie de l'usage de l'IA ;
   - éthique de l'application.
-- [ ] Partie algorithmique : choix, comparaison, résultats du benchmark.
+- [ ] Partie algorithmique : compléter `rapport/algorithme.typ` à chaque version, avec les résultats du benchmark sur les instances générées.

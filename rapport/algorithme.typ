@@ -52,7 +52,7 @@ Commande : `python -m scheduling.benchmark` (depuis `backend/`).
   [Version], [Principe], [Complexité], [Limites],
   [`random@1` \ (référence)], [Heure et salle tirées au hasard pour chaque séance, sans aucune contrainte. Sert de plancher à battre.], [$O(n)$], [Presque jamais valide.],
   [`greedy@1`], [Séances les plus contraintes d'abord (moins de salles possibles, puis plus de conflits, puis plus longues) ; chacune prend le premier créneau libre de la semaine et la plus petite salle qui convient ; aucun retour arrière.], [$O(n log n)$ pour le tri, puis $O(n dot S dot (R + n))$ au pire ($S$ débuts possibles, $R$ salles)], [Ne revient jamais sur un choix : peut laisser des séances non placées alors qu'une solution existe. Remplit le début de semaine en premier.],
-  [`dsatur@1` \ _à venir_], [Coloration du graphe des conflits (DSatur), puis attribution des salles créneau par créneau.], [$O(n^2)$ pour la coloration], [—],
+  [`dsatur@1`], [Coloration de graphe DSatur adaptée : la séance qui a le *moins de placements encore possibles* (créneau + salle libre) passe en premier, et ce classement est *recalculé après chaque placement*. Elle prend ensuite le premier créneau libre, comme le glouton : seule la règle d'ordre change.], [$O(n^2 dot S dot (R + n))$ au pire, soit environ $n$ fois le glouton], [Plus lent (≈ 100 fois sur 34 séances). Remplit toujours le début de semaine en premier.],
   [`annealing@1` \ _à venir_], [Recuit simulé à partir de la solution DSatur, pour réduire les trous et le déséquilibre.], [$O("itérations" times "coût d'un mouvement")$], [—],
 )
 
@@ -60,6 +60,7 @@ Commande : `python -m scheduling.benchmark` (depuis `backend/`).
 
 Instance de test `tiny` : une promo (60 étudiants) avec TD1, TD2 et un groupe de TP sous TD1 ; deux profs, dont Bob indisponible le lundi matin ; un amphi, une salle de 35 places, une salle de TP.
 
+#block(breakable: false)[
 #table(
   columns: (auto, 1fr, 1fr),
   [Lundi], [Cours], [Salle],
@@ -68,6 +69,7 @@ Instance de test `tiny` : une promo (60 étudiants) avec TD1, TD2 et un groupe d
   [13 h 30 – 15 h], [TD1 (Bob)], [salle 35 places],
   [15 h – 16 h], [TD2 (Bob)], [salle 35 places],
 )
+]
 
 Toutes les contraintes dures sont respectées et il n'y a aucun trou, mais *tout est placé le lundi* : le glouton prend toujours le premier créneau libre. C'est la faiblesse que les versions suivantes devront corriger.
 
@@ -78,11 +80,25 @@ Toutes les contraintes dures sont respectées et il n'y a aucun trou, mais *tout
   [Instance], [Algorithme], [Exécutions], [Valides], [Violations], [Non placées], [Score souple],
   [`tiny`], [`random@1`], [5], [0 %], [2,8], [0], [9,68 ± 1,47],
   [`tiny`], [`greedy@1`], [1], [100 %], [0], [0], [11,20],
+  [`tiny`], [`dsatur@1`], [1], [100 %], [0], [0], [11,20],
+  [`demo`], [`random@1`], [5], [0 %], [46,6], [0], [62,50 ± 12,78],
+  [`demo`], [`greedy@1`], [1], [100 %], [0], [0], [92,60],
+  [`demo`], [`dsatur@1`], [1], [100 %], [0], [0], [90,20],
+  [`tight`], [`random@1`], [5], [0 %], [56,8], [0], [62,50 ± 12,78],
+  [`tight`], [`greedy@1`], [1], [0 %], [0], [*7*], [78,50],
+  [`tight`], [`dsatur@1`], [1], [100 %], [0], [*0*], [73,40],
 )
 
-Le hasard obtient un meilleur score souple parce qu'il étale les cours sur la semaine, mais ses solutions sont invalides : il est classé derrière. Ces résultats ne portent que sur une instance de 4 séances ; les jeux de données de tailles croissantes (petit, moyen, grand) viendront du générateur.
+Instances : `demo` est une semaine réaliste d'une promo de L3 (34 séances, 7 profs, 6 salles) ; `tight` est la même semaine avec moins de ressources (une seule salle de TD et un seul labo, Robert disponible seulement le lundi et le vendredi, Petit, Bernard et Leroy absents un ou deux jours).
+
+- Sur les instances faciles, glouton et DSatur placent tout ; le hasard obtient un meilleur score souple parce qu'il étale les cours, mais ses solutions sont invalides.
+- Sur `tight`, *le glouton laisse 7 séances de côté* (les 6 TP Réseaux de Robert et un TP de bases de données) : son ordre, fixé au départ, ne voit pas que Robert ne vient que deux jours, et le labo est déjà pris quand vient le tour de ses TP. *DSatur les place toutes*, parce qu'il traite toujours d'abord la séance qui a le moins d'options.
+- Ce gain se paie en temps de calcul (0,35 s contre 0,003 s), négligeable ici mais à surveiller sur de grandes instances.
+
+Les jeux de données de tailles croissantes viendront du générateur.
 
 = Questions ouvertes
 
 - Le poids de l'équilibre (8,4 points pour le glouton sur `tiny`) risque d'écraser celui des trous sur de petites semaines : à revoir avec les résultats sur les grandes instances.
-- Le glouton gagnerait-il à choisir le créneau le moins chargé plutôt que le premier ? Ce serait `greedy@2`.
+- Glouton et DSatur entassent les cours en début de semaine. Choisir le créneau le moins chargé plutôt que le premier corrigerait-il le déséquilibre ? Ce serait `greedy@2` et `dsatur@2`.
+- Écart avec le plan initial : DSatur devait attribuer les salles après coup, créneau par créneau. Avec des cours de 1 h et 1 h 30 qui se chevauchent partiellement, la salle est choisie en même temps que le créneau.

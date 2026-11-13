@@ -49,7 +49,7 @@ Recommandation de la littérature : *commencer simple* et n'ajouter des agents q
 
 = Ce qu'on en retient pour notre projet
 
-- *Architecture* : Claude Code comme agent principal, avec un contexte projet versionné (`CLAUDE.md`) et des sous-agents ajoutés seulement s'ils apportent un gain.
+- *Architecture* : Claude Code comme agent principal, avec un contexte projet versionné (`AGENTS.md`) et des sous-agents ajoutés seulement s'ils apportent un gain.
 - *Garde-fous* : revue humaine par pull request, tests et analyse statique en CI.
 - *Mesurer plutôt que ressentir* : temps réel contre temps estimé, taux de retouche du code généré, bugs selon l'origine du code (IA ou humain).
 - *L'algorithme reste à nous* : nous concevons et justifions la génération d'emploi du temps (glouton, coloration de graphe, recuit simulé) ; l'agent aide à l'implémenter.
