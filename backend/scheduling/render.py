@@ -1,10 +1,11 @@
 """Static HTML view of solutions: one weekly grid per student group, algorithms side by side.
 
 Usage, from backend/:
-    python -m scheduling.render -i tiny                      # every algorithm, seed 0
-    python -m scheduling.render -i tiny -a greedy@1 random@1 --seed 3 -o /tmp/tiny.html
+    python -m scheduling.render -i demo                      # every algorithm, seed 0, first 2 groups
+    python -m scheduling.render -i demo -a greedy@1 random@1 --seed 3 -g "TP A1" "TP C2"
 
-Classes that overlap in a group's timetable are outlined in red.
+Algorithms are shown side by side (in the order given), one row per student group. Classes that
+overlap in a group's timetable are outlined in red and shifted so that none is hidden.
 """
 import argparse
 import random
@@ -17,15 +18,17 @@ from scheduling.io import INSTANCES_DIR, load_instance
 from scheduling.model import Placement, Problem, Solution
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
+WEEK_WIDTH_PX = 44 + 5 * 120 + 2  # time column, 5 day columns, borders (see .week)
 DAYS = ("Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi")
 COLORS = {"CM": "#cfe0fc", "TD": "#d3f2d6", "TP": "#fde2c4", "EXAM": "#f8cfd0"}
 
 CSS = """
 body { font-family: system-ui, sans-serif; margin: 24px; color: #1d1d1f; background: #fff; }
-.algorithms { display: flex; gap: 32px; flex-wrap: wrap; align-items: flex-start; }
-.summary { font-size: 13px; margin: 4px 0 12px; }
+.compare { display: grid; gap: 24px; align-items: start; }
+h2 { font-size: 18px; margin: 0; }
+.summary { font-size: 13px; margin: 4px 0 0; }
 .ok { color: #1a7f37; } .ko { color: #c62828; }
-h3 { font-size: 14px; margin: 16px 0 4px; }
+h3 { font-size: 14px; margin: 24px 0 6px; }
 .week { display: grid; grid-template-columns: 44px repeat(5, 120px); grid-auto-rows: 22px; font-size: 11px;
         border: 1px solid #ccc; }
 .head { text-align: center; font-weight: 600; padding: 3px; border-bottom: 1px solid #ccc; }
@@ -104,26 +107,54 @@ def _heading(problem: Problem, group_id: int) -> str:
     return f"Étudiant de {_group_name(problem, group_id)}{suffix}"
 
 
-def _algorithm_column(problem: Problem, label: str, solution: Solution) -> str:
+def _summary(problem: Problem, label: str, solution: Solution) -> str:
     result = evaluate(problem, solution)
     status = '<span class="ok">valide</span>' if result.feasible else '<span class="ko">invalide</span>'
-    summary = (
-        f"{status} · {result.hard_violations} violation(s) · {result.unplaced} non placée(s) · "
-        f"score souple {result.soft_score:.2f}"
+    return (
+        f'<div><h2>{escape(label)}</h2><p class="summary">{status} · {result.hard_violations} violation(s) · '
+        f"{result.unplaced} non placée(s) · score souple {result.soft_score:.2f}</p></div>"
     )
-    grids = "".join(
-        f"<h3>{escape(_heading(problem, group))}</h3>{_week(problem, timetable)}"
-        for group, timetable in leaf_timetables(problem, list(solution.placements.values())).items()
-    )
-    return f'<section><h2>{escape(label)}</h2><p class="summary">{summary}</p>{grids}</section>'
 
 
-def render_html(problem: Problem, solutions: dict[str, Solution], title: str) -> str:
-    columns = "".join(_algorithm_column(problem, label, s) for label, s in solutions.items())
+def _row_of(cells: list[str]) -> str:
+    """One column per algorithm, in the order given, side by side."""
+    # Fixed column width (one week grid) so summaries line up with the grids below them
+    return f'<div class="compare" style="grid-template-columns:repeat({len(cells)}, {WEEK_WIDTH_PX}px)">{"".join(cells)}</div>'
+
+
+def _spread(items: list, count: int) -> list:
+    """`count` items evenly spread over the list, first and last included."""
+    if len(items) <= count:
+        return items
+    if count == 1:
+        return items[:1]
+    step = (len(items) - 1) / (count - 1)
+    return [items[round(i * step)] for i in range(count)]
+
+
+def select_groups(problem: Problem, wanted: list[str] | None, max_groups: int) -> list[int]:
+    """Finest groups to show, by name or id; by default `max_groups` of them, spread over the list."""
+    parents = {g.parent_id for g in problem.groups}
+    leaves = [g for g in problem.groups if g.id not in parents]
+    if wanted:
+        return [g.id for g in leaves if g.name in wanted or str(g.id) in wanted]
+    return [g.id for g in _spread(leaves, max_groups)]
+
+
+def render_html(
+    problem: Problem, solutions: dict[str, Solution], title: str, groups: list[int] | None = None
+) -> str:
+    groups = groups if groups is not None else select_groups(problem, None, max_groups=2)
+    timetables = {
+        label: leaf_timetables(problem, list(solution.placements.values())) for label, solution in solutions.items()
+    }
+    parts = [_row_of([_summary(problem, label, s) for label, s in solutions.items()])]
+    for group in groups:
+        parts.append(f"<h3>{escape(_heading(problem, group))}</h3>")
+        parts.append(_row_of([_week(problem, timetables[label][group]) for label in solutions]))
     return (
         f'<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>{escape(title)}</title>'
-        f"<style>{CSS}</style></head><body><h1>{escape(title)}</h1>"
-        f'<div class="algorithms">{columns}</div></body></html>'
+        f"<style>{CSS}</style></head><body><h1>{escape(title)}</h1>{''.join(parts)}</body></html>"
     )
 
 
@@ -132,6 +163,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument("-i", "--instance", default="tiny", help="name in scheduling/instances/")
     parser.add_argument("-a", "--algorithms", nargs="+", choices=sorted(ALGORITHMS), help="default: all")
     parser.add_argument("--seed", type=int, default=0, help="seed for non-deterministic algorithms")
+    parser.add_argument("-g", "--groups", nargs="+", help="finest groups to show, by name or id (default: the first 2)")
     parser.add_argument("-o", "--output", type=Path, help="default: scheduling/results/<instance>.html")
     args = parser.parse_args(argv)
 
@@ -140,7 +172,8 @@ def main(argv: list[str] | None = None) -> None:
     solutions = {key: ALGORITHMS[key].solve(problem, random.Random(args.seed), None) for key in keys}
     output = args.output or RESULTS_DIR / f"{args.instance}.html"
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(render_html(problem, solutions, f"Instance {args.instance}"), encoding="utf-8")
+    groups = select_groups(problem, args.groups, max_groups=2)
+    output.write_text(render_html(problem, solutions, f"Instance {args.instance}", groups), encoding="utf-8")
     print(f"Written to {output}")
 
 
