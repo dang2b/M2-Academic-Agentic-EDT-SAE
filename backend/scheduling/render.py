@@ -1,10 +1,11 @@
 """Static HTML view of solutions: one weekly grid per student group, algorithms side by side.
 
 Usage, from backend/:
-    python -m scheduling.render -i demo                      # every algorithm, seed 0, first 2 groups
-    python -m scheduling.render -i demo -a greedy@1 random@1 --seed 3 -g "TP A1" "TP C2"
+    python -m scheduling.render -i demo                   # tabs Glouton / Hasard and Glouton / DSatur
+    python -m scheduling.render -i tight -c greedy@1,dsatur@1 greedy@1,dsatur@1,random@1
+    python -m scheduling.render -i demo -a greedy@1 random@1 --seed 3 -g "TP A1" "TP C2"   # one tab
 
-Algorithms are shown side by side (in the order given), one row per student group. Classes that
+Each tab shows algorithms side by side (in the order given), one row per student group. Classes that
 overlap in a group's timetable are outlined in red and shifted so that none is hidden.
 """
 import argparse
@@ -106,12 +107,24 @@ def _heading(problem: Problem, group_id: int) -> str:
     return f"Étudiant de {_group_name(problem, group_id)}{suffix}"
 
 
+def _unplaced_list(problem: Problem, solution: Solution) -> str:
+    missing = [problem.sessions_by_id[sid] for sid in solution.unplaced(problem)]
+    if not missing:
+        return ""
+    items = ", ".join(
+        f"{s.session_type} {s.label or f'#{s.id}'} ({', '.join(_group_name(problem, g) for g in sorted(s.group_ids))})"
+        for s in missing
+    )
+    return f'<p class="summary ko">Non placées : {escape(items)}</p>'
+
+
 def _summary(problem: Problem, label: str, solution: Solution) -> str:
     result = evaluate(problem, solution)
     status = '<span class="ok">valide</span>' if result.feasible else '<span class="ko">invalide</span>'
     return (
         f'<div><h2>{escape(label)}</h2><p class="summary">{status} · {result.hard_violations} violation(s) · '
-        f"{result.unplaced} non placée(s) · score souple {result.soft_score:.2f}</p></div>"
+        f"{result.unplaced} non placée(s) · score souple {result.soft_score:.2f}</p>"
+        f"{_unplaced_list(problem, solution)}</div>"
     )
 
 
@@ -140,10 +153,29 @@ def select_groups(problem: Problem, wanted: list[str] | None, max_groups: int) -
     return [g.id for g in _spread(leaves, max_groups)]
 
 
-def render_html(
-    problem: Problem, solutions: dict[str, Solution], title: str, groups: list[int] | None = None
-) -> str:
-    groups = groups if groups is not None else select_groups(problem, None, max_groups=2)
+DEFAULT_TABS = (("greedy@1", "random@1"), ("greedy@1", "dsatur@1"))
+DISPLAY_NAMES = {"greedy": "Glouton", "random": "Hasard", "dsatur": "DSatur"}
+
+TABS_CSS = """
+.tabs { display: flex; gap: 8px; margin: 0 0 16px; }
+.tabs button { font: inherit; font-size: 14px; padding: 6px 14px; border: 1px solid #bbb; border-radius: 6px;
+               background: #f6f6f6; cursor: pointer; }
+.tabs button.active { background: #1d1d1f; color: #fff; border-color: #1d1d1f; }
+.tab[hidden] { display: none; }
+"""
+TABS_JS = """
+function showTab(i) {
+  document.querySelectorAll('.tab').forEach((t, k) => { t.hidden = k !== i; });
+  document.querySelectorAll('.tabs button').forEach((b, k) => b.classList.toggle('active', k === i));
+}
+"""
+
+
+def tab_label(keys: tuple[str, ...]) -> str:
+    return " / ".join(DISPLAY_NAMES.get(key.split("@")[0], key) for key in keys)
+
+
+def _comparison(problem: Problem, solutions: dict[str, Solution], groups: list[int]) -> str:
     timetables = {
         label: leaf_timetables(problem, list(solution.placements.values())) for label, solution in solutions.items()
     }
@@ -151,28 +183,67 @@ def render_html(
     for group in groups:
         parts.append(f"<h3>{escape(_heading(problem, group))}</h3>")
         parts.append(_row_of([_week(problem, timetables[label][group]) for label in solutions]))
+    return "".join(parts)
+
+
+def render_html(
+    problem: Problem,
+    solutions: dict[str, Solution],
+    title: str,
+    groups: list[int] | None = None,
+    tabs: list[tuple[str, ...]] | None = None,
+) -> str:
+    """One tab per comparison (algorithms side by side); a single comparison of all solutions by default."""
+    groups = groups if groups is not None else select_groups(problem, None, max_groups=2)
+    tabs = tabs or [tuple(solutions)]
+    buttons = "".join(
+        f'<button type="button" class="{"active" if i == 0 else ""}" onclick="showTab({i})">{escape(tab_label(keys))}</button>'
+        for i, keys in enumerate(tabs)
+    )
+    sections = "".join(
+        f'<section class="tab"{" hidden" if i else ""}>{_comparison(problem, {k: solutions[k] for k in keys}, groups)}</section>'
+        for i, keys in enumerate(tabs)
+    )
+    nav = f'<nav class="tabs">{buttons}</nav>' if len(tabs) > 1 else ""
     return (
         f'<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>{escape(title)}</title>'
-        f"<style>{CSS}</style></head><body><h1>{escape(title)}</h1>{''.join(parts)}</body></html>"
+        f"<style>{CSS}{TABS_CSS}</style><script>{TABS_JS}</script></head>"
+        f"<body><h1>{escape(title)}</h1>{nav}{sections}</body></html>"
     )
+
+
+def parse_tabs(values: list[str] | None, algorithms: list[str] | None) -> list[tuple[str, ...]]:
+    if algorithms:
+        return [tuple(algorithms)]
+    if values:
+        tabs = [tuple(v.split(",")) for v in values]
+    else:
+        tabs = list(DEFAULT_TABS)
+    unknown = {k for keys in tabs for k in keys} - ALGORITHMS.keys()
+    if unknown:
+        raise SystemExit(f"unknown algorithms: {', '.join(sorted(unknown))} (known: {', '.join(sorted(ALGORITHMS))})")
+    return tabs
 
 
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("-i", "--instance", default="tiny", help="name in scheduling/instances/")
-    parser.add_argument("-a", "--algorithms", nargs="+", choices=sorted(ALGORITHMS), help="default: all")
+    parser.add_argument("-c", "--compare", nargs="+", metavar="A,B",
+                        help="one tab per comma-separated list (default: greedy@1,random@1 greedy@1,dsatur@1)")
+    parser.add_argument("-a", "--algorithms", nargs="+", choices=sorted(ALGORITHMS), help="a single tab with these")
     parser.add_argument("--seed", type=int, default=0, help="seed for non-deterministic algorithms")
-    parser.add_argument("-g", "--groups", nargs="+", help="finest groups to show, by name or id (default: the first 2)")
+    parser.add_argument("-g", "--groups", nargs="+", help="finest groups to show, by name or id (default: 2 of them)")
     parser.add_argument("-o", "--output", type=Path, help="default: scheduling/results/<instance>.html")
     args = parser.parse_args(argv)
 
     problem = load_instance(INSTANCES_DIR / f"{args.instance}.json")
-    keys = args.algorithms or sorted(ALGORITHMS)
+    tabs = parse_tabs(args.compare, args.algorithms)
+    keys = list(dict.fromkeys(k for t in tabs for k in t))  # each algorithm runs once
     solutions = {key: ALGORITHMS[key].solve(problem, random.Random(args.seed), None) for key in keys}
     output = args.output or RESULTS_DIR / f"{args.instance}.html"
     output.parent.mkdir(parents=True, exist_ok=True)
     groups = select_groups(problem, args.groups, max_groups=2)
-    output.write_text(render_html(problem, solutions, f"Instance {args.instance}", groups), encoding="utf-8")
+    output.write_text(render_html(problem, solutions, f"Instance {args.instance}", groups, tabs), encoding="utf-8")
     print(f"Written to {output}")
 
 
